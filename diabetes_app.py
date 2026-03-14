@@ -220,7 +220,7 @@ if not st.session_state.logged_in:
         <div style='background:rgba(10,147,150,0.1); border:1px solid rgba(10,147,150,0.3); border-radius:10px; padding:12px; text-align:center;'>
             <p style='color:rgba(255,255,255,0.7) !important; font-size:12px; margin:0;'>
             🔑 Username: <b style='color:#94d2bd;'>admin</b> &nbsp;|&nbsp;
-            Password: <b style='color:#94d2bd;'>diabetes123</b>
+            Password: <b style='color:#94d2bd;'>diabetes13</b>
             </p>
         </div>
         """, unsafe_allow_html=True)
