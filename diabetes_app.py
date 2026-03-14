@@ -239,7 +239,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    pages = [("🏠", "Home"), ("🔬", "Prediction"), ("⚠️", "Risk Factors"), ("🏥", "Health Consult")]
+    pages = [("🏠", "Home"), ("🔬", "Prediction"), ("⚠️", "Risk Factors"), ("🏥", "Health Recommendation")]
     cols  = st.columns(len(pages) + 1)
 
     for i, (icon, label) in enumerate(pages):
@@ -323,7 +323,7 @@ else:
             st.markdown("""
             <div class='home-card'>
                 <span class='icon'>🏥</span>
-                <h4>Health Consultation</h4>
+                <h4>Health Recommendations</h4>
                 <p>Get personalized health tips including diet recommendations, exercise tips, medical advice and lifestyle changes based on your result.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -503,12 +503,12 @@ else:
                     """, unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════
-    # PAGE 4: HEALTH CONSULT
+    # PAGE 4: HEALTH RECOMMENDATIONS
     # ═══════════════════════════════════════════════════
-    elif page == "🏥 Health Consult":
+    elif page == "🏥 Health Recommen":
         st.markdown("""
         <div class='header-box'>
-            <h1>🏥 Health Consultation</h1>
+            <h1>🏥 Health Recommendations</h1>
             <p>Personalized health recommendations</p>
         </div>
         """, unsafe_allow_html=True)
