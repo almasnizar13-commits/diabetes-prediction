@@ -239,7 +239,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    pages = [("🏠", "Home"), ("🔬", "Prediction"), ("⚠️", "Risk Factors"), ("🏥", "Health Recommendation")]
+    pages = [("🏠", "Home"), ("🔬", "Prediction"), ("⚠️", "Risk Factors"), ("🏥", "Health Recommendations")]
     cols  = st.columns(len(pages) + 1)
 
     for i, (icon, label) in enumerate(pages):
@@ -505,7 +505,7 @@ else:
     # ═══════════════════════════════════════════════════
     # PAGE 4: HEALTH RECOMMENDATIONS
     # ═══════════════════════════════════════════════════
-    elif page == "🏥 Health Recommen":
+    elif page == "🏥 Health Recommendations":
         st.markdown("""
         <div class='header-box'>
             <h1>🏥 Health Recommendations</h1>
