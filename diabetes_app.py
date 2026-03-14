@@ -206,7 +206,7 @@ if not st.session_state.logged_in:
         st.markdown("<br>", unsafe_allow_html=True)
 
         if st.button("🔐 LOGIN"):
-            if username == "admin" and password == "diabetes123":
+            if username == "admin" and password == "diabetes13":
                 st.session_state.logged_in = True
                 st.success("✅ Login Successful!")
                 st.rerun()
