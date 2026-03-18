@@ -376,7 +376,7 @@ else:
         with col1:
             st.markdown("<div class='input-card'>", unsafe_allow_html=True)
             st.markdown("<h4 style='color:#94d2bd !important; font-size:16px; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; margin-bottom:16px;'>👤 Patient Details</h4>", unsafe_allow_html=True)
-            pregnancies = st.number_input("Pregnancies",           min_value=0,   max_value=20,   value=0,   step=1)
+            
             glucose     = st.number_input("Glucose (mg/dL)",       min_value=0,   max_value=300,  value=100, step=1)
             bp          = st.number_input("Blood Pressure (mmHg)", min_value=0,   max_value=200,  value=70,  step=1)
             skin        = st.number_input("Skin Thickness (mm)",   min_value=0,   max_value=100,  value=20,  step=1)
@@ -394,7 +394,7 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
 
         if st.button("⚡ PREDICT NOW"):
-            features        = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
+            features        = np.array([[glucose, bp, skin, insulin, bmi, dpf, age]])
             features_scaled = scaler.transform(features)
             prediction      = int(model.predict(features_scaled)[0])
             probability     = float(model.predict_proba(features_scaled)[0][1]) * 100
@@ -402,7 +402,7 @@ else:
             st.session_state["last_prediction"]  = prediction
             st.session_state["last_probability"] = probability
             st.session_state["last_inputs"] = {
-                "pregnancies": pregnancies, "glucose": glucose,
+                "glucose": glucose,
                 "bp": bp, "skin": skin, "insulin": insulin,
                 "bmi": bmi, "dpf": dpf, "age": age
             }
