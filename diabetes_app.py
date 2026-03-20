@@ -8,7 +8,7 @@ model  = pickle.load(open("diabetes_rf_model.pkl", "rb"))
 scaler = pickle.load(open("scaler.pkl", "rb"))
 
 st.set_page_config(
-    page_title="DiabetesAI — Smart Health System",
+    page_title="Diabetes Prediction — Smart Health System",
     page_icon="🩺",
     layout="wide"
 )
@@ -56,6 +56,41 @@ label {
 .stSelectbox div[data-baseweb="select"] span {
     color: #000000 !important;
     font-weight: 600 !important;
+    font-size: 15px !important;
+}
+.stSelectbox div[data-baseweb="select"] div {
+    color: #000000 !important;
+    background: #ffffff !important;
+}
+.stSelectbox svg {
+    fill: #000000 !important;
+}
+[data-baseweb="popover"] {
+    background: #ffffff !important;
+}
+[data-baseweb="popover"] li {
+    color: #000000 !important;
+    background: #ffffff !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+[data-baseweb="popover"] li:hover {
+    background: #e6f9f9 !important;
+    color: #005f73 !important;
+}
+[data-baseweb="menu"] {
+    background: #ffffff !important;
+}
+[data-baseweb="menu"] li {
+    color: #000000 !important;
+    font-size: 14px !important;
+}
+[data-baseweb="menu"] li:hover {
+    background: #e6f9f9 !important;
+}
+[data-baseweb="select"] input {
+    color: #000000 !important;
+}
 }
 
 .header-box {
@@ -172,7 +207,7 @@ if not st.session_state.logged_in:
     st.markdown("""
     <div style='text-align:center; padding:40px 0 16px;'>
         <div style='font-size:52px;'>🩺</div>
-        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>DiabetesAI</h1>
+        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>Diabetes Prediction</h1>
         <p style='color:rgba(255,255,255,0.5) !important; font-size:13px;'>Smart Diabetes Prediction</p>
     </div>
     """, unsafe_allow_html=True)
@@ -217,8 +252,8 @@ else:
     st.markdown("""
     <div style='text-align:center; padding:12px 0 6px;'>
         <span style='font-size:28px;'>🩺</span>
-        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>DiabetesAI</h2>
-        <p style='color:rgba(255,255,255,0.45) !important; font-size:11px;'>Smart Diabetes Prediction & Health Management System</p>
+        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>Diabetes Prediction</h2>
+        <p style='color:rgba(255,255,255,0.45) !important; font-size:11px;'>Smart Diabetes Prediction</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -272,7 +307,7 @@ else:
     if page == "🏠 Home":
         st.markdown("""
         <div class='header-box'>
-            <h1>🏠 Welcome to Back</h1>
+            <h1>🏠 Welcome Back</h1>
             <p>Diabetes Prediction</p>
         </div>
         """, unsafe_allow_html=True)
@@ -313,7 +348,7 @@ else:
             <div class='card' style='text-align:center;'>
                 <div style='font-size:36px; margin-bottom:12px;'>🔬</div>
                 <h4>Diabetes Prediction</h4>
-                <p style='font-size:13px;'>Enter medical parameters and get instant AI prediction — Diabetic or Not Diabetic with probability percentage.</p>
+                <p style='font-size:13px;'>Enter medical parameters and get instant prediction — Diabetic or Not Diabetic with probability percentage.</p>
             </div>
             """, unsafe_allow_html=True)
         with col3:
@@ -396,8 +431,7 @@ else:
             medications    = st.text_input("Current Medications",         placeholder="Enter current medications if any")
         with col4:
             allergies = st.text_input("Known Allergies",  placeholder="Enter allergies if any")
-            doctor    = st.text_input("Doctor Name",      placeholder="Enter doctor name")
-            hospital  = st.text_input("Hospital / Clinic",placeholder="Enter hospital name")
+            
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -415,7 +449,7 @@ else:
                     "existing_conditions": existing,
                     "medications": medications,
                     "allergies": allergies,
-                    "doctor": doctor, "hospital": hospital,
+                   
                     "date": datetime.now().strftime("%d/%m/%Y %H:%M")
                 }
                 st.success(f"✅ Patient details saved for {name}!")
