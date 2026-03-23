@@ -262,7 +262,7 @@ else:
     st.markdown("""
     <div style='text-align:center; padding:12px 0 6px;'>
         <span style='font-size:28px;'>🩺</span>
-        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>DiabetesAI</h2>
+        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>Diabetes Prediction</h2>
         <p style='color:rgba(255,255,255,0.45) !important; font-size:11px;'>Smart Diabetes Prediction </p>
     </div>
     """, unsafe_allow_html=True)
@@ -391,7 +391,7 @@ else:
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>5</span>
-                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Get tips from <b style='color:#94d2bd;'>🏥 Health Consult</b></p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Get tips from <b style='color:#94d2bd;'>🏥 Health Recommend</b></p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>6</span>
@@ -839,7 +839,7 @@ else:
             # ── DOWNLOAD TEXT REPORT ─────────────────────
             report_lines = []
             report_lines.append("=" * 60)
-            report_lines.append("       DIABETESAI — PATIENT HEALTH REPORT")
+            report_lines.append("       DIABETES PREDICTION — PATIENT HEALTH REPORT")
             report_lines.append("=" * 60)
             report_lines.append(f"Generated on  : {datetime.now().strftime('%d/%m/%Y %H:%M')}")
             report_lines.append(f"Total Records : {total}")
@@ -872,7 +872,7 @@ else:
                 report_lines.append("-" * 40)
 
             report_lines.append("\n" + "=" * 60)
-            report_lines.append("Diabetes Prediction — Smart Diabetes Prediction & Health Management System")
+            report_lines.append("Diabetes Prediction — Smart Diabetes Prediction")
             report_lines.append("For educational purposes only. Not a substitute for medical advice.")
             report_lines.append("=" * 60)
 
