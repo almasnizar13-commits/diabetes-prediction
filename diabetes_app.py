@@ -44,10 +44,12 @@ label {
     background: #ffffff !important;
     color: #000000 !important;
     font-size: 14px !important;
+    font-weight: 500 !important;
     border: 2px solid #0a9396 !important;
     border-radius: 8px !important;
 }
 
+/* ✅ SELECT BOX FIX */
 .stSelectbox div[data-baseweb="select"] {
     background: #ffffff !important;
     border: 2px solid #0a9396 !important;
@@ -62,12 +64,8 @@ label {
     color: #000000 !important;
     background: #ffffff !important;
 }
-.stSelectbox svg {
-    fill: #000000 !important;
-}
-[data-baseweb="popover"] {
-    background: #ffffff !important;
-}
+.stSelectbox svg { fill: #000000 !important; }
+[data-baseweb="popover"] { background: #ffffff !important; }
 [data-baseweb="popover"] li {
     color: #000000 !important;
     background: #ffffff !important;
@@ -78,20 +76,13 @@ label {
     background: #e6f9f9 !important;
     color: #005f73 !important;
 }
-[data-baseweb="menu"] {
-    background: #ffffff !important;
-}
+[data-baseweb="menu"] { background: #ffffff !important; }
 [data-baseweb="menu"] li {
     color: #000000 !important;
     font-size: 14px !important;
 }
-[data-baseweb="menu"] li:hover {
-    background: #e6f9f9 !important;
-}
-[data-baseweb="select"] input {
-    color: #000000 !important;
-}
-}
+[data-baseweb="menu"] li:hover { background: #e6f9f9 !important; }
+[data-baseweb="select"] input { color: #000000 !important; }
 
 .header-box {
     background: linear-gradient(135deg, #0a9396, #005f73);
@@ -191,10 +182,29 @@ section[data-testid="stSidebar"] * { color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# ── LOAD SAVED RECORDS FROM FILE ──────────────────────────
+RECORDS_FILE = "saved_records.csv"
+
+def load_records():
+    if os.path.exists(RECORDS_FILE):
+        try:
+            df = pd.read_csv(RECORDS_FILE)
+            return df.to_dict('records')
+        except:
+            return []
+    return []
+
+def save_records_to_file(records):
+    if records:
+        df = pd.DataFrame(records)
+        df.to_csv(RECORDS_FILE, index=False)
+
+import os
+
 # ── SESSION STATE ──────────────────────────────────────────
 if "logged_in"        not in st.session_state: st.session_state.logged_in        = False
 if "page"             not in st.session_state: st.session_state.page             = "🏠 Home"
-if "records"          not in st.session_state: st.session_state.records          = []
+if "records"          not in st.session_state: st.session_state.records          = load_records()
 if "last_prediction"  not in st.session_state: st.session_state.last_prediction  = None
 if "last_inputs"      not in st.session_state: st.session_state.last_inputs      = None
 if "patient_details"  not in st.session_state: st.session_state.patient_details  = {}
@@ -207,8 +217,8 @@ if not st.session_state.logged_in:
     st.markdown("""
     <div style='text-align:center; padding:40px 0 16px;'>
         <div style='font-size:52px;'>🩺</div>
-        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>Diabetes Prediction</h1>
-        <p style='color:rgba(255,255,255,0.5) !important; font-size:13px;'>Smart Diabetes Prediction</p>
+        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>DiabetesAI</h1>
+        <p style='color:rgba(255,255,255,0.5) !important; font-size:13px;'>Smart Diabetes Prediction & Health Management System</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -252,8 +262,8 @@ else:
     st.markdown("""
     <div style='text-align:center; padding:12px 0 6px;'>
         <span style='font-size:28px;'>🩺</span>
-        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>Diabetes Prediction</h2>
-        <p style='color:rgba(255,255,255,0.45) !important; font-size:11px;'>Smart Diabetes Prediction</p>
+        <h2 style='color:white !important; font-weight:700; margin:4px 0 2px;'>DiabetesAI</h2>
+        <p style='color:rgba(255,255,255,0.45) !important; font-size:11px;'>Smart Diabetes Prediction </p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -262,7 +272,7 @@ else:
         ("👤", "Patient Details"),
         ("🔬", "Prediction"),
         ("⚠️", "Risk Factors"),
-        ("🏥", "Health Consult"),
+        ("🏥", "Health Recommendations"),
         ("📋", "Saved Records"),
     ]
 
@@ -307,8 +317,8 @@ else:
     if page == "🏠 Home":
         st.markdown("""
         <div class='header-box'>
-            <h1>🏠 Welcome Back</h1>
-            <p>Diabetes Prediction</p>
+            <h1>🏠 Welcome to Diabetes Prediction</h1>
+            <p>Instant Diabetes Prediction</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -318,18 +328,17 @@ else:
             <p style='color:rgba(255,255,255,0.85) !important; font-size:14px; line-height:2;'>
             This application is designed to
             <b style='color:#94d2bd;'>predict whether a person is Diabetic or Not Diabetic</b>
-            based on their personal and medical details. By entering key health parameters,
-            the system uses advanced
-            <b style='color:#94d2bd;'>Artificial Intelligence</b>
-            to instantly analyze the data and provide an accurate prediction result.
+            based on their personal and medical details.
+            By entering key health parameters,
+            the system instantly analyzes the data and provides an accurate prediction result.
             The app also shows detailed
             <b style='color:#94d2bd;'>Risk Factor Analysis</b>
             for each medical parameter and gives
             <b style='color:#94d2bd;'>Personalized Health Recommendations</b>
             including diet, exercise, medical advice and lifestyle changes.
-            All patient records can be
-            <b style='color:#94d2bd;'>Saved and Downloaded</b>
-            as documents for future medical reference.
+            All patient records are
+            <b style='color:#94d2bd;'>Permanently Saved</b>
+            and can be downloaded as documents for future medical reference.
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -340,7 +349,7 @@ else:
             <div class='card' style='text-align:center;'>
                 <div style='font-size:36px; margin-bottom:12px;'>👤</div>
                 <h4>Patient Details</h4>
-                <p style='font-size:13px;'>Enter patient personal information like name, age, gender, blood group and contact details before prediction.</p>
+                <p style='font-size:13px; color:rgba(255,255,255,0.8) !important;'>Enter patient personal information like name, age, gender, blood group and contact details.</p>
             </div>
             """, unsafe_allow_html=True)
         with col2:
@@ -348,7 +357,7 @@ else:
             <div class='card' style='text-align:center;'>
                 <div style='font-size:36px; margin-bottom:12px;'>🔬</div>
                 <h4>Diabetes Prediction</h4>
-                <p style='font-size:13px;'>Enter medical parameters and get instant prediction — Diabetic or Not Diabetic with probability percentage.</p>
+                <p style='font-size:13px; color:rgba(255,255,255,0.8) !important;'>Enter medical parameters and get instant prediction — Diabetic or Not Diabetic with probability percentage.</p>
             </div>
             """, unsafe_allow_html=True)
         with col3:
@@ -356,7 +365,7 @@ else:
             <div class='card' style='text-align:center;'>
                 <div style='font-size:36px; margin-bottom:12px;'>📋</div>
                 <h4>Save & Download</h4>
-                <p style='font-size:13px;'>Save all patient records automatically and download complete health report as CSV or text document.</p>
+                <p style='font-size:13px; color:rgba(255,255,255,0.8) !important;'>All patient records are permanently saved and can be downloaded as CSV or health report document.</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -366,27 +375,27 @@ else:
             <div style='display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;'>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>1</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>👤 Patient Details</b> — enter personal info</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>👤 Patient Details</b> — enter personal info</p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>2</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>🔬 Prediction</b> — enter medical details</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>🔬 Prediction</b> — enter medical details</p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>3</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>⚡ Predict Now</b> — get result instantly</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Click <b style='color:#94d2bd;'>⚡ Predict Now</b> — get result instantly</p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>4</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Check <b style='color:#94d2bd;'>⚠️ Risk Factors</b> for analysis</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Check <b style='color:#94d2bd;'>⚠️ Risk Factors</b> for analysis</p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>5</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Get tips from <b style='color:#94d2bd;'>🏥 Health Consult</b></p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Get tips from <b style='color:#94d2bd;'>🏥 Health Consult</b></p>
                 </div>
                 <div style='display:flex; align-items:center; gap:12px;'>
                     <span style='background:#0a9396; color:white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;'>6</span>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Download report from <b style='color:#94d2bd;'>📋 Saved Records</b></p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Download report from <b style='color:#94d2bd;'>📋 Saved Records</b></p>
                 </div>
             </div>
         </div>
@@ -407,18 +416,18 @@ else:
 
         with col1:
             st.markdown("<div class='card'><h4>👤 Personal Information</h4>", unsafe_allow_html=True)
-            name   = st.text_input("Full Name",     placeholder="Enter patient full name")
-            age    = st.number_input("Age",          min_value=1, max_value=120, value=30)
-            gender = st.selectbox("Gender",          ["Male", "Female", "Other"])
-            dob    = st.text_input("Date of Birth",  placeholder="DD/MM/YYYY")
-            blood  = st.selectbox("Blood Group",     ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"])
+            name   = st.text_input("Full Name",    placeholder="Enter patient full name")
+            age    = st.number_input("Age",         min_value=1, max_value=120, value=30)
+            gender = st.selectbox("Gender",         ["Male", "Female", "Other"])
+            dob    = st.text_input("Date of Birth", placeholder="DD/MM/YYYY")
+            blood  = st.selectbox("Blood Group",    ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"])
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
             st.markdown("<div class='card'><h4>📞 Contact Information</h4>", unsafe_allow_html=True)
             phone   = st.text_input("Phone Number",  placeholder="Enter phone number")
             email   = st.text_input("Email Address", placeholder="Enter email address")
-            address = st.text_area("Address",        placeholder="Enter full address", height=100)
+            address = st.text_area("Address",        placeholder="Enter full address", height=80)
             city    = st.text_input("City",          placeholder="Enter city")
             state   = st.text_input("State",         placeholder="Enter state")
             st.markdown("</div>", unsafe_allow_html=True)
@@ -428,10 +437,9 @@ else:
         with col3:
             family_history = st.selectbox("Family History of Diabetes",  ["No", "Yes — Father", "Yes — Mother", "Yes — Both Parents", "Yes — Siblings"])
             existing       = st.selectbox("Existing Medical Conditions",  ["None", "Hypertension", "Obesity", "Heart Disease", "Kidney Disease", "Other"])
-            medications    = st.text_input("Current Medications",         placeholder="Enter current medications if any")
         with col4:
-            allergies = st.text_input("Known Allergies",  placeholder="Enter allergies if any")
-            
+            medications = st.text_input("Current Medications", placeholder="Enter current medications if any")
+            allergies   = st.text_input("Known Allergies",     placeholder="Enter allergies if any")
         st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -449,7 +457,6 @@ else:
                     "existing_conditions": existing,
                     "medications": medications,
                     "allergies": allergies,
-                   
                     "date": datetime.now().strftime("%d/%m/%Y %H:%M")
                 }
                 st.success(f"✅ Patient details saved for {name}!")
@@ -460,7 +467,7 @@ else:
             st.markdown(f"""
             <div style='background:rgba(10,147,150,0.1); border:1px solid rgba(10,147,150,0.3); border-radius:12px; padding:14px 16px; margin-top:16px;'>
                 <p style='color:#94d2bd !important; font-weight:600; margin-bottom:6px;'>✅ Current Patient Saved:</p>
-                <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>
+                <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>
                 👤 <b>{p.get('name','')}</b> &nbsp;|&nbsp;
                 🎂 Age: {p.get('age','')} &nbsp;|&nbsp;
                 ⚧ {p.get('gender','')} &nbsp;|&nbsp;
@@ -500,16 +507,16 @@ else:
 
         with col1:
             st.markdown("<div class='card'><h4>🩸 Blood Parameters</h4>", unsafe_allow_html=True)
-            glucose = st.number_input("Glucose Level (mg/dL)",      min_value=0,   max_value=300,  value=100, step=1,    help="Normal: 70–140 mg/dL")
-            insulin = st.number_input("Insulin Level (μU/mL)",      min_value=0,   max_value=900,  value=80,  step=1,    help="Normal: 16–166 μU/mL")
-            bp      = st.number_input("Blood Pressure (mmHg)",      min_value=0,   max_value=200,  value=70,  step=1,    help="Normal: 60–90 mmHg")
+            glucose = st.number_input("Glucose Level (mg/dL)",  min_value=0,   max_value=300,  value=100, step=1,    help="Normal: 70–140 mg/dL")
+            insulin = st.number_input("Insulin Level (μU/mL)",  min_value=0,   max_value=900,  value=80,  step=1,    help="Normal: 16–166 μU/mL")
+            bp      = st.number_input("Blood Pressure (mmHg)",  min_value=0,   max_value=200,  value=70,  step=1,    help="Normal: 60–90 mmHg")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
             st.markdown("<div class='card'><h4>📊 Body Parameters</h4>", unsafe_allow_html=True)
-            bmi     = st.number_input("BMI (kg/m²)",                min_value=0.0, max_value=70.0, value=25.0,step=0.1,  help="Normal: 18.5–24.9")
-            dpf     = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0,  value=0.5, step=0.001,format="%.3f", help="Range: 0.08–2.42")
-            age_val = st.number_input("Age (years)",                min_value=1,   max_value=120,  value=30,  step=1,    help="Range: 21–81")
+            bmi     = st.number_input("BMI (kg/m²)",                min_value=0.0, max_value=70.0, value=25.0, step=0.1,   help="Normal: 18.5–24.9")
+            dpf     = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0,  value=0.5,  step=0.001, format="%.3f", help="Range: 0.08–2.42")
+            age_val = st.number_input("Age (years)",                min_value=1,   max_value=120,  value=30,   step=1,     help="Range: 21–81")
             st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -528,24 +535,33 @@ else:
                 "dpf": dpf, "age": age_val
             }
 
+            # ✅ Auto save record permanently
             record = {
-                "date":        datetime.now().strftime("%d/%m/%Y %H:%M"),
-                "patient":     st.session_state.patient_details.get("name", "Unknown"),
-                "age":         st.session_state.patient_details.get("age", age_val),
-                "gender":      st.session_state.patient_details.get("gender", "—"),
-                "blood_group": st.session_state.patient_details.get("blood_group", "—"),
-                "phone":       st.session_state.patient_details.get("phone", "—"),
-                "doctor":      st.session_state.patient_details.get("doctor", "—"),
-                "hospital":    st.session_state.patient_details.get("hospital", "—"),
-                "family_history": st.session_state.patient_details.get("family_history", "—"),
-                "existing_conditions": st.session_state.patient_details.get("existing_conditions", "—"),
-                "glucose":     glucose, "bp": bp,
-                "insulin":     insulin, "bmi": bmi,
-                "dpf":         dpf, "age_val": age_val,
-                "result":      "DIABETIC" if prediction == 1 else "NOT DIABETIC",
-                "probability": round(probability, 1)
+                "date":               datetime.now().strftime("%d/%m/%Y %H:%M"),
+                "patient":            st.session_state.patient_details.get("name",               "Unknown"),
+                "age":                st.session_state.patient_details.get("age",                age_val),
+                "gender":             st.session_state.patient_details.get("gender",             "—"),
+                "blood_group":        st.session_state.patient_details.get("blood_group",        "—"),
+                "phone":              st.session_state.patient_details.get("phone",              "—"),
+                "email":              st.session_state.patient_details.get("email",              "—"),
+                "address":            st.session_state.patient_details.get("address",            "—"),
+                "city":               st.session_state.patient_details.get("city",               "—"),
+                "state":              st.session_state.patient_details.get("state",              "—"),
+                "family_history":     st.session_state.patient_details.get("family_history",     "—"),
+                "existing_conditions":st.session_state.patient_details.get("existing_conditions","—"),
+                "medications":        st.session_state.patient_details.get("medications",        "—"),
+                "allergies":          st.session_state.patient_details.get("allergies",          "—"),
+                "glucose":            glucose,
+                "bp":                 bp,
+                "insulin":            insulin,
+                "bmi":                bmi,
+                "dpf":                dpf,
+                "age_val":            age_val,
+                "result":             "DIABETIC" if prediction == 1 else "NOT DIABETIC",
+                "probability":        round(probability, 1)
             }
             st.session_state.records.append(record)
+            save_records_to_file(st.session_state.records)
 
             st.markdown("<br>", unsafe_allow_html=True)
             col1, col2 = st.columns(2)
@@ -595,7 +611,7 @@ else:
                         st.markdown(f"<div class='risk-ok'>✅ {name_r}: {val} {unit} — Normal</div>", unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-            st.success("✅ Record automatically saved! Go to 📋 Saved Records to download.")
+            st.success("✅ Record permanently saved! Go to 📋 Saved Records to download.")
 
     # ════════════════════════════════════════════════════
     # PAGE 4: RISK FACTORS
@@ -637,18 +653,18 @@ else:
                             <span style='color:{color}; font-size:11px; font-weight:600;'>{status}</span>
                         </div>
                         <div style='font-size:20px; font-weight:700; color:{color}; margin-bottom:4px;'>{val} <span style='font-size:12px; font-weight:400; color:rgba(255,255,255,0.5);'>{unit}</span></div>
-                        <div style='font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:8px;'>Normal: {low} – {high} {unit}</div>
-                        <div style='font-size:12px; color:rgba(255,255,255,0.7); line-height:1.6;'>{desc}</div>
+                        <div style='font-size:10px; color:rgba(255,255,255,0.55); margin-bottom:8px;'>Normal: {low} – {high} {unit}</div>
+                        <div style='font-size:12px; color:rgba(255,255,255,0.75); line-height:1.6;'>{desc}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
     # ════════════════════════════════════════════════════
-    # PAGE 5: HEALTH CONSULT
+    # PAGE 5: HEALTH RECOMMENDATION
     # ════════════════════════════════════════════════════
-    elif page == "🏥 Health Consult":
+    elif page == "🏥 Health Recommendations":
         st.markdown("""
         <div class='header-box'>
-            <h1>🏥 Health Consultation</h1>
+            <h1>🏥 Health Recommendation</h1>
             <p>Personalized health recommendations based on your result</p>
         </div>
         """, unsafe_allow_html=True)
@@ -661,14 +677,14 @@ else:
                 st.markdown("""
                 <div style='background:rgba(230,57,70,0.1); border:1px solid #e63946; border-radius:14px; padding:18px; margin-bottom:20px;'>
                     <h3 style='color:#e63946 !important; margin-bottom:4px;'>⚠️ High Risk — Please Follow These Recommendations</h3>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Your result indicates high diabetes risk. Strictly follow the below health guidelines.</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Your result indicates high diabetes risk. Strictly follow the below health guidelines.</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                 <div style='background:rgba(45,198,83,0.1); border:1px solid #2dc653; border-radius:14px; padding:18px; margin-bottom:20px;'>
                     <h3 style='color:#2dc653 !important; margin-bottom:4px;'>✅ Low Risk — Maintain Your Healthy Lifestyle</h3>
-                    <p style='color:rgba(255,255,255,0.8) !important; margin:0; font-size:13px;'>Your result shows low diabetes risk. Follow these tips to stay healthy.</p>
+                    <p style='color:rgba(255,255,255,0.85) !important; margin:0; font-size:13px;'>Your result shows low diabetes risk. Follow these tips to stay healthy.</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -689,7 +705,6 @@ else:
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
-
                 st.markdown("""
                 <div class='card'>
                     <h4>🏃 Exercise Recommendations</h4>
@@ -703,7 +718,6 @@ else:
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
-
             with col2:
                 st.markdown("""
                 <div class='card'>
@@ -720,7 +734,6 @@ else:
                     </ul>
                 </div>
                 """, unsafe_allow_html=True)
-
                 st.markdown("""
                 <div class='card'>
                     <h4>😴 Lifestyle Changes</h4>
@@ -742,12 +755,15 @@ else:
         st.markdown("""
         <div class='header-box'>
             <h1>📋 Saved Patient Records</h1>
-            <p>View, manage and download all patient records</p>
+            <p>All records are permanently saved — view and download anytime</p>
         </div>
         """, unsafe_allow_html=True)
 
+        # Reload from file every time
+        st.session_state.records = load_records()
+
         if not st.session_state.records:
-            st.info("📭 No records saved yet. Run a prediction to auto-save records!")
+            st.info("📭 No records saved yet. Run a prediction to save records!")
         else:
             total    = len(st.session_state.records)
             diabetic = sum(1 for r in st.session_state.records if r['result'] == 'DIABETIC')
@@ -771,33 +787,33 @@ else:
                     <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;'>
                         <div>
                             <span style='color:white; font-size:15px; font-weight:600;'>{icon} {r['patient']}</span>
-                            <span style='color:rgba(255,255,255,0.4); font-size:11px; margin-left:12px;'>📅 {r['date']}</span>
+                            <span style='color:rgba(255,255,255,0.45); font-size:11px; margin-left:12px;'>📅 {r['date']}</span>
                         </div>
                         <span style='color:{color}; font-weight:700; font-size:13px; background:rgba(255,255,255,0.05); padding:4px 12px; border-radius:100px; border:1px solid {color};'>{r['result']} — {r['probability']}%</span>
                     </div>
                     <div style='display:grid; grid-template-columns:repeat(6,1fr); gap:8px;'>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>Age</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>Age</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['age']}</div>
                         </div>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>Gender</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>Gender</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['gender']}</div>
                         </div>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>Glucose</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>Glucose</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['glucose']}</div>
                         </div>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>BMI</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>BMI</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['bmi']}</div>
                         </div>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>BP</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>BP</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['bp']}</div>
                         </div>
                         <div style='background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; text-align:center;'>
-                            <div style='font-size:10px; color:rgba(255,255,255,0.4);'>Insulin</div>
+                            <div style='font-size:10px; color:rgba(255,255,255,0.45);'>Insulin</div>
                             <div style='font-size:13px; color:white; font-weight:600;'>{r['insulin']}</div>
                         </div>
                     </div>
@@ -834,27 +850,29 @@ else:
             for i, r in enumerate(st.session_state.records, 1):
                 report_lines.append(f"\nRecord #{i}")
                 report_lines.append("-" * 40)
-                report_lines.append(f"Patient Name      : {r['patient']}")
-                report_lines.append(f"Date              : {r['date']}")
-                report_lines.append(f"Age               : {r['age']}")
-                report_lines.append(f"Gender            : {r['gender']}")
-                report_lines.append(f"Blood Group       : {r['blood_group']}")
-                report_lines.append(f"Phone             : {r['phone']}")
-                report_lines.append(f"Doctor            : {r['doctor']}")
-                report_lines.append(f"Hospital          : {r['hospital']}")
-                report_lines.append(f"Family History    : {r['family_history']}")
+                report_lines.append(f"Patient Name       : {r['patient']}")
+                report_lines.append(f"Date               : {r['date']}")
+                report_lines.append(f"Age                : {r['age']}")
+                report_lines.append(f"Gender             : {r['gender']}")
+                report_lines.append(f"Blood Group        : {r['blood_group']}")
+                report_lines.append(f"Phone              : {r['phone']}")
+                report_lines.append(f"Email              : {r['email']}")
+                report_lines.append(f"Address            : {r['address']}, {r['city']}, {r['state']}")
+                report_lines.append(f"Family History     : {r['family_history']}")
                 report_lines.append(f"Existing Conditions: {r['existing_conditions']}")
-                report_lines.append(f"Glucose           : {r['glucose']} mg/dL")
-                report_lines.append(f"Blood Pressure    : {r['bp']} mmHg")
-                report_lines.append(f"Insulin           : {r['insulin']} μU/mL")
-                report_lines.append(f"BMI               : {r['bmi']} kg/m²")
-                report_lines.append(f"DPF Score         : {r['dpf']}")
-                report_lines.append(f"Prediction Result : {r['result']}")
-                report_lines.append(f"Probability       : {r['probability']}%")
+                report_lines.append(f"Medications        : {r['medications']}")
+                report_lines.append(f"Allergies          : {r['allergies']}")
+                report_lines.append(f"Glucose            : {r['glucose']} mg/dL")
+                report_lines.append(f"Blood Pressure     : {r['bp']} mmHg")
+                report_lines.append(f"Insulin            : {r['insulin']} μU/mL")
+                report_lines.append(f"BMI                : {r['bmi']} kg/m²")
+                report_lines.append(f"DPF Score          : {r['dpf']}")
+                report_lines.append(f"Prediction Result  : {r['result']}")
+                report_lines.append(f"Probability        : {r['probability']}%")
                 report_lines.append("-" * 40)
 
             report_lines.append("\n" + "=" * 60)
-            report_lines.append(" Smart Diabetes Prediction & Health Management System")
+            report_lines.append("Diabetes Prediction — Smart Diabetes Prediction & Health Management System")
             report_lines.append("For educational purposes only. Not a substitute for medical advice.")
             report_lines.append("=" * 60)
 
@@ -872,5 +890,7 @@ else:
 
             if st.button("🗑️ CLEAR ALL RECORDS"):
                 st.session_state.records = []
+                if os.path.exists(RECORDS_FILE):
+                    os.remove(RECORDS_FILE)
                 st.success("✅ All records cleared!")
                 st.rerun()
