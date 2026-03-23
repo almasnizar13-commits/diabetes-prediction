@@ -217,8 +217,8 @@ if not st.session_state.logged_in:
     st.markdown("""
     <div style='text-align:center; padding:40px 0 16px;'>
         <div style='font-size:52px;'>🩺</div>
-        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>DiabetesAI</h1>
-        <p style='color:rgba(255,255,255,0.5) !important; font-size:13px;'>Smart Diabetes Prediction & Health Management System</p>
+        <h1 style='color:white !important; font-size:30px; font-weight:700; margin:8px 0 4px;'>Diabetes Prediction</h1>
+        <p style='color:rgba(255,255,255,0.5) !important; font-size:13px;'>Smart Diabetes Prediction</p>
     </div>
     """, unsafe_allow_html=True)
 
