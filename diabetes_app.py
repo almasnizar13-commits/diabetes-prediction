@@ -630,28 +630,28 @@ def generate_pdf(title, subtitle, df):
 
     pdf.ln(5)
 
-    # Records
-    for i, (_, row) in enumerate(df.iterrows(), 1):
-        result = str(row.get("Result", ""))
-        prob = row.get("Probability", 0)
-        risk = str(row.get("RiskLevel", ""))
+ # Records
+for i, (_, row) in enumerate(df.iterrows(), 1):
+    result = str(row.get("Result", ""))
+    prob = row.get("Probability", 0)
+    risk = str(row.get("RiskLevel", ""))
 
-        pdf.set_font("DejaVu", "B", 11)
-        pdf.cell(0, 8, f"Record #{i} - {result} | Probability: {prob}% | Risk: {risk}", ln=True)
+    pdf.set_font("DejaVu", "B", 11)
+    pdf.cell(0, 8, f"Record #{i} - {result} | Probability: {prob}% | Risk: {risk}", ln=True)
 
-        pdf.set_font("DejaVu", "", 10)
-        pdf.cell(0, 6, f"Date: {row.get('Date','-')}", ln=True)
-        pdf.cell(0, 6, f"Age: {row.get('Age','-')}", ln=True)
-        pdf.cell(0, 6, f"Sex: {row.get('Sex','-')}", ln=True)
-        pdf.cell(0, 6, f"Glucose: {row.get('Glucose','-')}", ln=True)
-        pdf.cell(0, 6, f"BMI: {row.get('BMI','-')}", ln=True)
+    pdf.set_font("DejaVu", "", 10)
+    pdf.cell(0, 6, f"Date: {row.get('Date','-')}", ln=True)
+    pdf.cell(0, 6, f"Age: {row.get('Age','-')}", ln=True)
+    pdf.cell(0, 6, f"Sex: {row.get('Sex','-')}", ln=True)
+    pdf.cell(0, 6, f"Glucose: {row.get('Glucose','-')}", ln=True)
+    pdf.cell(0, 6, f"BMI: {row.get('BMI','-')}", ln=True)
 
-        rec = str(row.get("Recommendation", "-"))
-        pdf.multi_cell(0, 6, f"Recommendation: {rec}")
+    rec = str(row.get("Recommendation", "-"))
+    pdf.multi_cell(0, 6, f"Recommendation: {rec}")
 
-        pdf.ln(3)
+    pdf.ln(3)
 
- pdf_output = pdf.output(dest='S')
+pdf_output = pdf.output(dest='S')
 return pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin1')
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
