@@ -1137,7 +1137,6 @@ st.download_button(
 
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-# Specific patient
 st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
 
 patients = get_patients(user["username"])
@@ -1147,33 +1146,34 @@ if patients:
     sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
     sel_p = p_opts[sel_label]
 
+    # ✅ correct filtering
     p_records = get_patient_records(user["username"], sel_p[1])
 
     if p_records:
         p_df = pd.DataFrame(p_records, columns=RECORD_COLS)
-        p_show = p_df.drop(columns=["ID", "Username"], errors="ignore")
 
-        st.markdown(
-            f"<p style='color:#5a7a9a; font-size:13px;'>{len(p_df)} records found for <b style='color:#0fd4c8;'>{sel_p[3]}</b></p>",
-            unsafe_allow_html=True
-        )
+        p_show = p_df.drop(columns=["ID", "Username"], errors="ignore")
 
         st.dataframe(p_show, use_container_width=True, hide_index=True)
 
-        p_pdf = generate_pdf(sel_p[3], sel_p[1], p_show)
+        # ✅ correct PDF generation
+        p_pdf = generate_pdf(
+            title=f"Patient Report - {sel_p[3]}",
+            subtitle=f"Patient ID: {sel_p[1]}",
+            df=p_show
+        )
 
         st.download_button(
-            f"📄 Download {sel_p[3]} PDF Report",
+            "📄 Download Patient Report",
             data=p_pdf,
-            file_name=f"{sel_p[3].replace(' ','_')}_report.pdf",
+            file_name=f"{sel_p[1]}_report.pdf",
             mime="application/pdf",
             use_container_width=True
         )
     else:
-        st.markdown("<p style='color:#5a7a9a;'>No records for this patient yet</p>", unsafe_allow_html=True)
+        st.warning("No records found for this patient")
 
 st.markdown("</div>", unsafe_allow_html=True)
-
 # ══════════════════════════════════════════════════════════
 # VISUALIZATION
 # ══════════════════════════════════════════════════════════
