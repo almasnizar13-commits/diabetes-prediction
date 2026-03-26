@@ -607,7 +607,7 @@ def get_recommendation(prob):
 
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
-#def generate_pdf(title, subtitle, df):
+def generate_pdf(title, subtitle, df):
     from fpdf import FPDF
     import os
     from datetime import datetime
@@ -616,31 +616,33 @@ def get_recommendation(prob):
     pdf.add_page()
 
     font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
+
     pdf.add_font("DejaVu", "", font_path, uni=True)
     pdf.add_font("DejaVu", "B", font_path, uni=True)
 
     # Header
     pdf.set_font("DejaVu", "B", 16)
-    pdf.cell(0, 10, f"{title}", ln=True)
+    pdf.cell(0, 10, title, ln=True)
 
     pdf.set_font("DejaVu", "", 11)
-    pdf.cell(0, 8, f"{subtitle}", ln=True)
+    pdf.cell(0, 8, subtitle, ln=True)
     pdf.cell(0, 8, f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}", ln=True)
+
     pdf.ln(5)
 
-    # Records loop
+    # Records
     for i, (_, row) in enumerate(df.iterrows(), 1):
         result = str(row.get("Result", ""))
         prob = row.get("Probability", 0)
         risk = str(row.get("RiskLevel", ""))
 
         pdf.set_font("DejaVu", "B", 11)
-        pdf.cell(0, 8, f"Record #{i} — {result} | Probability: {prob}% | Risk: {risk}", ln=True)
+        pdf.cell(0, 8, f"Record #{i} - {result} | Probability: {prob}% | Risk: {risk}", ln=True)
 
         pdf.set_font("DejaVu", "", 10)
-
         pdf.cell(0, 6, f"Date: {row.get('Date','-')}", ln=True)
         pdf.cell(0, 6, f"Age: {row.get('Age','-')}", ln=True)
+        pdf.cell(0, 6, f"Sex: {row.get('Sex','-')}", ln=True)
         pdf.cell(0, 6, f"Glucose: {row.get('Glucose','-')}", ln=True)
         pdf.cell(0, 6, f"BMI: {row.get('BMI','-')}", ln=True)
 
@@ -1114,14 +1116,24 @@ def page_records():
     st.dataframe(show_df, use_container_width=True, hide_index=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Download all PDF
-    def generate_pdf(title, subtitle, df):
-      
-     st.download_button(
-    label="Download Patient PDF",
+   # Filter selected patient records
+p_show = fdf[fdf["PatientID"] == sel_p[0]]
+
+# Generate PDF
+p_pdf = generate_pdf(
+    title=f"Patient Report - {sel_p[3]}",   # name
+    subtitle=f"Patient ID: {sel_p[0]}",
+    df=p_show
+)
+
+# Download button
+st.download_button(
+    label="📄 Download Patient Report",
     data=p_pdf,
-    file_name="patient_report.pdf",
-    mime="application/pdf"
+    file_name=f"patient_{sel_p[0]}.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
 )
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
@@ -1151,6 +1163,19 @@ def page_records():
         else:
             st.markdown("<p style='color:#5a7a9a;'>No records for this patient yet</p>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+all_pdf = generate_pdf(
+    title="All Patients Report",
+    subtitle=f"User: {user['username']}",
+    df=fdf
+)
+
+st.download_button(
+    label="📊 Download All Records PDF",
+    data=all_pdf,
+    file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
 
 # ══════════════════════════════════════════════════════════
 # VISUALIZATION
