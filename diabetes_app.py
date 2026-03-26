@@ -175,7 +175,7 @@ def create_tables():
             id       INTEGER PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT,
-            fullname TEXT
+        
         )
     """)
     c.execute("""
@@ -197,16 +197,16 @@ def create_tables():
         )
     """)
     # Default admin
-    c.execute("INSERT OR IGNORE INTO users (username, password, fullname) VALUES (?,?,?)",
-              ("admin", "admin123", "Administrator"))
+    c.execute("INSERT OR IGNORE INTO users (username, password,) VALUES (?,?)",
+              ("admin", "admin123"))
     conn.commit()
 
 create_tables()
 
-def add_user(username, password, fullname):
+def add_user(username, password):
     try:
-        c.execute("INSERT INTO users (username, password, fullname) VALUES (?,?,?)",
-                  (username, password, fullname))
+        c.execute("INSERT INTO users (username, password) VALUES (?,?)",
+                  (username, password))
         conn.commit()
         return True
     except:
