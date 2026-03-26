@@ -1178,7 +1178,7 @@ def page_records():
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Download all PDF
-    all_pdf = generate_pdf("All Patients", "ALL", fdf)
+    def generate_pdf(title, subtitle, df):
     st.download_button(
         "📄 Download All Records (PDF)",
         data=all_pdf,
