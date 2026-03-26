@@ -651,7 +651,7 @@ def generate_pdf(title, subtitle, df):
 
         pdf.ln(3)
 
-pdf_output = pdf.output(dest='S')
+ pdf_output = pdf.output(dest='S')
 return pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin1')
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
