@@ -651,7 +651,9 @@ def generate_pdf(title, subtitle, df):
 
         pdf.ln(3)
 
-    return bytes(pdf.output(dest='S').encode('latin1'))
+pdf_output = pdf.output(dest='S')
+
+return pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin1')
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
 # ══════════════════════════════════════════════════════════
@@ -1114,7 +1116,7 @@ def page_records():
         st.download_button(
             "📄 Download All Records",
             data=all_pdf,
-            file_name="all_records.pdf",
+            file_name="All_patient records.pdf",
             mime="application/pdf",
             use_container_width=True
         )
