@@ -629,7 +629,7 @@ def generate_pdf(title, subtitle, df):
 
     pdf.ln(5)
 
-    # ✅ Records (INSIDE function)
+    # ✅ MUST be inside function
     for i, (_, row) in enumerate(df.iterrows(), 1):
         result = str(row.get("Result", ""))
         prob = row.get("Probability", 0)
@@ -650,9 +650,13 @@ def generate_pdf(title, subtitle, df):
 
         pdf.ln(3)
 
-    # ✅ ALSO inside function
     pdf_output = pdf.output(dest='S')
-    return pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin1')
+
+    # ✅ Proper encoding fix
+    if isinstance(pdf_output, bytes):
+        return pdf_output
+    else:
+        return pdf_output.encode('utf-8')
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
 # ══════════════════════════════════════════════════════════
