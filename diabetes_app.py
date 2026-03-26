@@ -1135,7 +1135,7 @@ st.download_button(
     use_container_width=True
 )
 
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     # Specific patient
     st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
