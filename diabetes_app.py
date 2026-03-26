@@ -607,10 +607,17 @@ def get_recommendation(prob):
 
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
-# ══════════════════════════════════════════════════════════
-def generate_pdf(patient_name, patient_id, records_df):
+# ══════════════════════════════════════════════════════════def generate_pdf(patient_name, patient_id, records_df):
+    from fpdf import FPDF
+    import os
+
     pdf = FPDF()
     pdf.add_page()
+
+    # ✅ LOAD DEJAVU FONT (UNICODE SUPPORT)
+    font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
+    pdf.add_font("DejaVu", "", font_path, uni=True)
+    pdf.add_font("DejaVu", "B", font_path, uni=True)
 
     # Cover header
     pdf.set_fill_color(6, 20, 45)
@@ -618,108 +625,93 @@ def generate_pdf(patient_name, patient_id, records_df):
     pdf.set_fill_color(15, 212, 200)
     pdf.rect(0, 47, 210, 3, 'F')
 
-    pdf.set_font("Helvetica","B", 24)
+    pdf.set_font("DejaVu","B", 24)
     pdf.set_text_color(15, 212, 200)
     pdf.set_y(10)
     pdf.cell(0, 12, "DiabetesAI Pro", ln=True, align='C')
 
-    pdf.set_font("Helvetica","", 12)
+    pdf.set_font("DejaVu","", 12)
     pdf.set_text_color(180, 200, 220)
     pdf.cell(0, 8, "Patient Health Report", ln=True, align='C')
     pdf.cell(0, 7, f"Generated: {datetime.now().strftime('%d %B %Y, %H:%M')}", ln=True, align='C')
     pdf.ln(12)
 
-    # Patient Info Box
+    # Patient Info
     pdf.set_fill_color(11, 22, 40)
     pdf.set_draw_color(15, 212, 200)
-    pdf.set_line_width(0.4)
     pdf.rect(10, pdf.get_y(), 190, 28, 'DF')
-    pdf.set_font("Helvetica","B", 13)
+
+    pdf.set_font("DejaVu","B", 13)
     pdf.set_text_color(15, 212, 200)
     pdf.set_x(15)
     pdf.cell(0, 8, f"Patient: {patient_name}", ln=True)
-    pdf.set_font("Helvetica","", 11)
+
+    pdf.set_font("DejaVu","", 11)
     pdf.set_text_color(180, 200, 220)
     pdf.set_x(15)
     pdf.cell(90, 7, f"Patient ID: {patient_id}")
-    pdf.cell(0,  7, f"Total Records: {len(records_df)}", ln=True)
+    pdf.cell(0, 7, f"Total Records: {len(records_df)}", ln=True)
     pdf.ln(10)
 
     # Records
     for i, (_, row) in enumerate(records_df.iterrows(), 1):
         result = str(row.get("Result",""))
         prob   = row.get("Probability", 0)
-        risk   = str(row.get("RiskLevel", row.get("Risk Level", "")))
+        risk   = str(row.get("RiskLevel",""))
 
-        # Record card
         if result == "Diabetic":
             pdf.set_fill_color(50, 10, 15)
             pdf.set_draw_color(255, 69, 96)
-            r_color = (255, 69, 96)
+            color = (255, 69, 96)
         else:
             pdf.set_fill_color(5, 30, 20)
             pdf.set_draw_color(0, 200, 130)
-            r_color = (0, 200, 130)
+            color = (0, 200, 130)
 
-        y0 = pdf.get_y()
-        pdf.set_line_width(0.4)
-        pdf.rect(10, y0, 190, 10, 'DF')
+        pdf.rect(10, pdf.get_y(), 190, 10, 'DF')
 
-        pdf.set_font("Helvetica","B", 11)
-        pdf.set_text_color(*r_color)
+        pdf.set_font("DejaVu","B", 11)
+        pdf.set_text_color(*color)
         pdf.set_x(15)
-        pdf.cell(0, 10, f"Record #{i}  —  {result}  |  Probability: {prob}%  |  Risk: {risk}", ln=True)
+
+        # ✅ THIS LINE CAUSED YOUR ERROR — NOW FIXED
+        pdf.cell(0, 10, f"Record #{i} — {result} | Probability: {prob}% | Risk: {risk}", ln=True)
 
         # Fields
-        pdf.set_fill_color(8, 18, 35)
-        pdf.set_draw_color(20, 37, 64)
-        pdf.set_line_width(0.2)
+        pdf.set_font("DejaVu","", 10)
+        pdf.set_text_color(200, 220, 240)
+
         fields = [
-            ("Date",     row.get("Date","—")),
-            ("Age",      str(row.get("Age","—"))),
-            ("Sex",      row.get("Sex","—")),
-            ("Glucose",  f"{row.get('Glucose','—')} mg/dL"),
-            ("Blood Pressure", f"{row.get('BP','—')} mmHg"),
-            ("Insulin",  f"{row.get('Insulin','—')} uU/mL"),
-            ("BMI",      f"{row.get('BMI','—')} kg/m2"),
-            ("DPF",      str(row.get("DPF","—"))),
+            f"Date: {row.get('Date','-')}",
+            f"Age: {row.get('Age','-')}",
+            f"Sex: {row.get('Sex','-')}",
+            f"Glucose: {row.get('Glucose','-')} mg/dL",
+            f"BP: {row.get('BP','-')} mmHg",
+            f"Insulin: {row.get('Insulin','-')} uU/mL",
+            f"BMI: {row.get('BMI','-')} kg/m2",
+            f"DPF: {row.get('DPF','-')}"
         ]
-        pdf.set_text_color(100, 150, 180)
-        pdf.set_font("Helvetica","", 10)
-        for j in range(0, len(fields), 2):
-            pdf.set_x(14)
-            pdf.set_fill_color(8, 18, 35) if j % 4 == 0 else pdf.set_fill_color(10, 22, 40)
-            lbl1, val1 = fields[j]
-            lbl2, val2 = fields[j+1] if j+1 < len(fields) else ("","")
-            pdf.cell(28, 7, f"{lbl1}:", fill=True)
-            pdf.set_text_color(220, 235, 248)
-            pdf.cell(67, 7, f" {val1}", fill=True)
-            pdf.set_text_color(100, 150, 180)
-            pdf.cell(28, 7, f"{lbl2}:", fill=True)
-            pdf.set_text_color(220, 235, 248)
-            pdf.cell(63, 7, f" {val2}", fill=True, ln=True)
-            pdf.set_text_color(100, 150, 180)
+
+        for f in fields:
+            pdf.set_x(15)
+            pdf.cell(0, 6, f, ln=True)
 
         # Recommendation
-        rec = str(row.get("Recommendation","—"))
-        pdf.set_fill_color(5, 25, 40)
+        rec = str(row.get("Recommendation","-"))
+        pdf.set_font("DejaVu","B", 10)
         pdf.set_text_color(15, 212, 200)
-        pdf.set_font("Helvetica","B", 9)
-        pdf.set_x(14)
-        pdf.cell(0, 7, "Recommendation:", fill=True, ln=True)
+        pdf.set_x(15)
+        pdf.cell(0, 6, "Recommendation:", ln=True)
+
+        pdf.set_font("DejaVu","", 9)
         pdf.set_text_color(180, 210, 230)
-        pdf.set_font("Helvetica","", 9)
-        pdf.set_x(14)
-        pdf.multi_cell(182, 6, rec, fill=True)
-        pdf.ln(5)
+        pdf.set_x(15)
+        pdf.multi_cell(180, 5, rec)
 
-    # Footer
-    pdf.set_fill_color(6, 20, 45)
-    pdf.set_text_color(15, 212, 200)
-    pdf.set_font("Helvetica","I", 8)
-    pdf.cell(0, 8, "DiabetesAI Pro  —  For educational purposes only. Not a substitute for medical advice.", fill=True, ln=True, align='C')
+        pdf.ln(4)
 
-    return bytes(pdf.output())
+    return bytes(pdf.output(dest='S').encode('latin1'))
+
 
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
