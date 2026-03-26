@@ -1179,7 +1179,7 @@ def page_records():
 
     # Download all PDF
     def generate_pdf(title, subtitle, df):
-    st.download_button(
+      st.download_button(
         "📄 Download All Records (PDF)",
         data=all_pdf,
         file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
