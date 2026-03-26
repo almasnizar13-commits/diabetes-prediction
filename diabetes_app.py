@@ -609,11 +609,11 @@ def get_recommendation(prob):
 # PDF GENERATOR
 # ══════════════════════════════════════════════════════════
     def generate_pdf(patient_name, patient_id, records_df):
-    from fpdf import FPDF
-    import os
+     from fpdf import FPDF
+     import os
 
-    pdf = FPDF()
-    pdf.add_page()
+      pdf = FPDF()
+      pdf.add_page()
 
     # ✅ LOAD DEJAVU FONT (UNICODE SUPPORT)
     font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
