@@ -1163,19 +1163,7 @@ st.download_button(
         else:
             st.markdown("<p style='color:#5a7a9a;'>No records for this patient yet</p>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-all_pdf = generate_pdf(
-    title="All Patients Report",
-    subtitle=f"User: {user['username']}",
-    df=fdf
-)
 
-st.download_button(
-    label="📊 Download All Records PDF",
-    data=all_pdf,
-    file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
-    mime="application/pdf",
-    use_container_width=True
-)
 
 # ══════════════════════════════════════════════════════════
 # VISUALIZATION
