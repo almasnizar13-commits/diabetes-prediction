@@ -1134,7 +1134,7 @@ st.download_button(
     mime="application/pdf",
     use_container_width=True
 )
-)
+
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     # Specific patient
