@@ -1116,8 +1116,6 @@ def page_records():
     st.dataframe(show_df, use_container_width=True, hide_index=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-   # Filter selected patient records
-p_show = fdf[fdf["PatientID"] == sel_p[0]]
 
 # Generate PDF
 p_pdf = generate_pdf(
