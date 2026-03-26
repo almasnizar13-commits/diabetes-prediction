@@ -651,13 +651,12 @@ def generate_pdf(title, subtitle, df):
 
         pdf.ln(3)
 
-    pdf_output = pdf.output(dest='S')
+     pdf_output = pdf.output(dest='S')
 
-    # ✅ Proper encoding fix
-    if isinstance(pdf_output, bytes):
-        return pdf_output
-    else:
-        return pdf_output.encode('utf-8')
+  if isinstance(pdf_output, bytes):
+      return pdf_output
+  else:
+      return pdf_output.encode('latin1')
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
 # ══════════════════════════════════════════════════════════
