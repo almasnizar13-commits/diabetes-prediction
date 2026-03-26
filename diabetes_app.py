@@ -1519,5 +1519,4 @@ else:
     elif page == "Visualization": page_visualization()
     elif page == "Health Tips":   page_health_tips()
     elif page == "Admin" and st.session_state.user["role"] == "admin": page_admin()
-```
 
