@@ -608,7 +608,7 @@ def get_recommendation(prob):
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
 # ══════════════════════════════════════════════════════════
-  def generate_pdf(title, subtitle, df):
+ def generate_pdf(title, subtitle, df):
     from fpdf import FPDF
     import os
 
@@ -622,11 +622,7 @@ def get_recommendation(prob):
     pdf.cell(0, 10, f"{title} - {subtitle}", ln=True)
 
     return bytes(pdf.output(dest='S').encode('latin1'))
-
-    # ✅ LOAD DEJAVU FONT (UNICODE SUPPORT)
-    font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
-    pdf.add_font("DejaVu", "", font_path, uni=True)
-    pdf.add_font("DejaVu", "B", font_path, uni=True)
+   
 
     # Cover header
     pdf.set_fill_color(6, 20, 45)
