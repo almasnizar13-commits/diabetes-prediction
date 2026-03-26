@@ -607,117 +607,49 @@ def get_recommendation(prob):
 
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
-# ══════════════════════════════════════════════════════════
- def generate_pdf(title, subtitle, df):
+#def generate_pdf(title, subtitle, df):
     from fpdf import FPDF
     import os
+    from datetime import datetime
 
     pdf = FPDF()
     pdf.add_page()
 
     font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
     pdf.add_font("DejaVu", "", font_path, uni=True)
-    pdf.set_font("DejaVu", size=10)
+    pdf.add_font("DejaVu", "B", font_path, uni=True)
 
-    pdf.cell(0, 10, f"{title} - {subtitle}", ln=True)
+    # Header
+    pdf.set_font("DejaVu", "B", 16)
+    pdf.cell(0, 10, f"{title}", ln=True)
 
-    return bytes(pdf.output(dest='S').encode('latin1'))
-   
+    pdf.set_font("DejaVu", "", 11)
+    pdf.cell(0, 8, f"{subtitle}", ln=True)
+    pdf.cell(0, 8, f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}", ln=True)
+    pdf.ln(5)
 
-    # Cover header
-    pdf.set_fill_color(6, 20, 45)
-    pdf.rect(0, 0, 210, 50, 'F')
-    pdf.set_fill_color(15, 212, 200)
-    pdf.rect(0, 47, 210, 3, 'F')
+    # Records loop
+    for i, (_, row) in enumerate(df.iterrows(), 1):
+        result = str(row.get("Result", ""))
+        prob = row.get("Probability", 0)
+        risk = str(row.get("RiskLevel", ""))
 
-    pdf.set_font("DejaVu","B", 24)
-    pdf.set_text_color(15, 212, 200)
-    pdf.set_y(10)
-    pdf.cell(0, 12, "DiabetesAI Pro", ln=True, align='C')
+        pdf.set_font("DejaVu", "B", 11)
+        pdf.cell(0, 8, f"Record #{i} — {result} | Probability: {prob}% | Risk: {risk}", ln=True)
 
-    pdf.set_font("DejaVu","", 12)
-    pdf.set_text_color(180, 200, 220)
-    pdf.cell(0, 8, "Patient Health Report", ln=True, align='C')
-    pdf.cell(0, 7, f"Generated: {datetime.now().strftime('%d %B %Y, %H:%M')}", ln=True, align='C')
-    pdf.ln(12)
+        pdf.set_font("DejaVu", "", 10)
 
-    # Patient Info
-    pdf.set_fill_color(11, 22, 40)
-    pdf.set_draw_color(15, 212, 200)
-    pdf.rect(10, pdf.get_y(), 190, 28, 'DF')
+        pdf.cell(0, 6, f"Date: {row.get('Date','-')}", ln=True)
+        pdf.cell(0, 6, f"Age: {row.get('Age','-')}", ln=True)
+        pdf.cell(0, 6, f"Glucose: {row.get('Glucose','-')}", ln=True)
+        pdf.cell(0, 6, f"BMI: {row.get('BMI','-')}", ln=True)
 
-    pdf.set_font("DejaVu","B", 13)
-    pdf.set_text_color(15, 212, 200)
-    pdf.set_x(15)
-    pdf.cell(0, 8, f"Patient: {patient_name}", ln=True)
+        rec = str(row.get("Recommendation", "-"))
+        pdf.multi_cell(0, 6, f"Recommendation: {rec}")
 
-    pdf.set_font("DejaVu","", 11)
-    pdf.set_text_color(180, 200, 220)
-    pdf.set_x(15)
-    pdf.cell(90, 7, f"Patient ID: {patient_id}")
-    pdf.cell(0, 7, f"Total Records: {len(records_df)}", ln=True)
-    pdf.ln(10)
-
-    # Records
-    for i, (_, row) in enumerate(records_df.iterrows(), 1):
-        result = str(row.get("Result",""))
-        prob   = row.get("Probability", 0)
-        risk   = str(row.get("RiskLevel",""))
-
-        if result == "Diabetic":
-            pdf.set_fill_color(50, 10, 15)
-            pdf.set_draw_color(255, 69, 96)
-            color = (255, 69, 96)
-        else:
-            pdf.set_fill_color(5, 30, 20)
-            pdf.set_draw_color(0, 200, 130)
-            color = (0, 200, 130)
-
-        pdf.rect(10, pdf.get_y(), 190, 10, 'DF')
-
-        pdf.set_font("DejaVu","B", 11)
-        pdf.set_text_color(*color)
-        pdf.set_x(15)
-
-        # ✅ THIS LINE CAUSED YOUR ERROR — NOW FIXED
-        pdf.cell(0, 10, f"Record #{i} — {result} | Probability: {prob}% | Risk: {risk}", ln=True)
-
-        # Fields
-        pdf.set_font("DejaVu","", 10)
-        pdf.set_text_color(200, 220, 240)
-
-        fields = [
-            f"Date: {row.get('Date','-')}",
-            f"Age: {row.get('Age','-')}",
-            f"Sex: {row.get('Sex','-')}",
-            f"Glucose: {row.get('Glucose','-')} mg/dL",
-            f"BP: {row.get('BP','-')} mmHg",
-            f"Insulin: {row.get('Insulin','-')} uU/mL",
-            f"BMI: {row.get('BMI','-')} kg/m2",
-            f"DPF: {row.get('DPF','-')}"
-        ]
-
-        for f in fields:
-            pdf.set_x(15)
-            pdf.cell(0, 6, f, ln=True)
-
-        # Recommendation
-        rec = str(row.get("Recommendation","-"))
-        pdf.set_font("DejaVu","B", 10)
-        pdf.set_text_color(15, 212, 200)
-        pdf.set_x(15)
-        pdf.cell(0, 6, "Recommendation:", ln=True)
-
-        pdf.set_font("DejaVu","", 9)
-        pdf.set_text_color(180, 210, 230)
-        pdf.set_x(15)
-        pdf.multi_cell(180, 5, rec)
-
-        pdf.ln(4)
+        pdf.ln(3)
 
     return bytes(pdf.output(dest='S').encode('latin1'))
-
-
 # ══════════════════════════════════════════════════════════
 # LOGIN PAGE
 # ══════════════════════════════════════════════════════════
