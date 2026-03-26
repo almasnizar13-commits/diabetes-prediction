@@ -608,12 +608,20 @@ def get_recommendation(prob):
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
 # ══════════════════════════════════════════════════════════
-    def generate_pdf(patient_name, patient_id, records_df):
-     from fpdf import FPDF
-     import os
+  def generate_pdf(title, subtitle, df):
+    from fpdf import FPDF
+    import os
 
     pdf = FPDF()
     pdf.add_page()
+
+    font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
+    pdf.add_font("DejaVu", "", font_path, uni=True)
+    pdf.set_font("DejaVu", size=10)
+
+    pdf.cell(0, 10, f"{title} - {subtitle}", ln=True)
+
+    return bytes(pdf.output(dest='S').encode('latin1'))
 
     # ✅ LOAD DEJAVU FONT (UNICODE SUPPORT)
     font_path = os.path.join(os.getcwd(), "DejaVuSans.ttf")
@@ -1181,13 +1189,12 @@ def page_records():
     # Download all PDF
     def generate_pdf(title, subtitle, df):
       
-      st.download_button(
-    label="Download",
-    data=all_pdf,
-    file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
+     st.download_button(
+    label="Download Patient PDF",
+    data=p_pdf,
+    file_name="patient_report.pdf",
     mime="application/pdf"
 )
-
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     # Specific patient
