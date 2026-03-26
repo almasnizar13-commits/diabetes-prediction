@@ -1181,15 +1181,12 @@ def page_records():
     # Download all PDF
     def generate_pdf(title, subtitle, df):
       
-       st.download_button(
-        label="Download Patient PDF",
-        data=p_pdf,
-        file_name="patient_report.pdf",
-        mime="application/pdf",
-
-        file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
-       
-    )
+      st.download_button(
+    label="Download",
+    data=all_pdf,
+    file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
+    mime="application/pdf"
+)
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
