@@ -1090,64 +1090,81 @@ def page_records():
 
     df = pd.DataFrame(records, columns=RECORD_COLS)
 
-    # Show all records
+    # Clean display (remove unnecessary columns)
+    display_cols = ["PatientID","Name","Age","Sex","Glucose","BMI","BP","Result","Probability","RiskLevel","Date"]
+    df_display = df[display_cols]
+
+    # =========================
+    # SHOW TABLE
+    # =========================
     st.markdown("<div class='glass-card'><h4>📊 All Records</h4>", unsafe_allow_html=True)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df_display, use_container_width=True, hide_index=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # =========================
     # DOWNLOAD ALL RECORDS
     # =========================
-    all_pdf = generate_pdf(
-        title="All Patient Records",
-        subtitle=f"User: {user['username']}",
-        df=df
-    )
+    if not df_display.empty:
+        all_pdf = generate_pdf(
+            title="All Patient Records",
+            subtitle=f"User: {user['username']}",
+            df=df_display
+        )
 
-    st.download_button(
-        "📄 Download All Records",
-        data=all_pdf,
-        file_name="all_records.pdf",
-        mime="application/pdf",
-        use_container_width=True
-    )
+        st.download_button(
+            "📄 Download All Records",
+            data=all_pdf,
+            file_name="all_records.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     # =========================
-    # DOWNLOAD SPECIFIC PATIENT
+    # PATIENT-WISE DOWNLOAD
     # =========================
     st.markdown("<div class='glass-card'><h4>👤 Patient Report</h4>", unsafe_allow_html=True)
 
     patients = get_patients(user["username"])
 
-    if patients:
-        p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
-        sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
-        sel_p = p_opts[sel_label]
+    if not patients:
+        st.warning("No patients found.")
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
 
-        p_records = get_patient_records(user["username"], sel_p[1])
+    p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
+    sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
+    sel_p = p_opts[sel_label]
 
-        if p_records:
-            p_df = pd.DataFrame(p_records, columns=RECORD_COLS)
+    # Get patient records
+    p_records = get_patient_records(user["username"], sel_p[1])
 
-            st.dataframe(p_df, use_container_width=True, hide_index=True)
+    if not p_records:
+        st.warning("No records found for this patient")
+        st.markdown("</div>", unsafe_allow_html=True)
+        return
 
-            p_pdf = generate_pdf(
-                title=f"Patient Report - {sel_p[3]}",
-                subtitle=f"Patient ID: {sel_p[1]}",
-                df=p_df
-            )
+    p_df = pd.DataFrame(p_records, columns=RECORD_COLS)
+    p_df_display = p_df[display_cols]
 
-            st.download_button(
-                "📄 Download Patient Report",
-                data=p_pdf,
-                file_name=f"{sel_p[1]}_report.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        else:
-            st.warning("No records found for this patient")
+    # Show patient records
+    st.dataframe(p_df_display, use_container_width=True, hide_index=True)
+
+    # Generate PDF
+    p_pdf = generate_pdf(
+        title=f"Patient Report - {sel_p[3]}",
+        subtitle=f"Patient ID: {sel_p[1]}",
+        df=p_df_display
+    )
+
+    st.download_button(
+        "📄 Download Patient Report",
+        data=p_pdf,
+        file_name=f"{sel_p[1]}_report.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
 
     st.markdown("</div>", unsafe_allow_html=True)
 # ══════════════════════════════════════════════════════════
