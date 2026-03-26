@@ -196,10 +196,7 @@ def create_tables():
             date           TEXT
         )
     """)
-    # Default admin
-    c.execute("INSERT OR IGNORE INTO users (username, password,) VALUES (?,?)",
-              ("admin", "admin123"))
-    conn.commit()
+   
 
 create_tables()
 
