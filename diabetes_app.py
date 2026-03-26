@@ -1079,99 +1079,77 @@ def page_prediction():
 # RECORDS
 # ══════════════════════════════════════════════════════════
 def page_records():
-    user    = st.session_state.user
+    user = st.session_state.user
     records = get_user_records(user["username"])
-    st.markdown("<div class='hero-header'><div class='hero-title'>📋 Saved Records</div><p class='hero-sub'>All patient records stored in database</p></div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='hero-header'><div class='hero-title'>📋 Saved Records</div></div>", unsafe_allow_html=True)
 
     if not records:
-        st.info("No records yet. Run a prediction to save records!"); return
+        st.info("No records yet.")
+        return
 
-    df       = pd.DataFrame(records, columns=RECORD_COLS)
-    total    = len(df)
-    diabetic = len(df[df["Result"]=="Diabetic"])
-    healthy  = total - diabetic
+    df = pd.DataFrame(records, columns=RECORD_COLS)
 
-    c1,c2,c3 = st.columns(3)
-    with c1: st.markdown(f"<div class='stat-card'><div class='stat-num'>{total}</div><div class='stat-lbl'>Total Records</div></div>", unsafe_allow_html=True)
-    with c2: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#ff4560;'>{diabetic}</div><div class='stat-lbl'>Diabetic</div></div>", unsafe_allow_html=True)
-    with c3: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#00e396;'>{healthy}</div><div class='stat-lbl'>Not Diabetic</div></div>", unsafe_allow_html=True)
+    # Show all records
+    st.markdown("<div class='glass-card'><h4>📊 All Records</h4>", unsafe_allow_html=True)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # =========================
+    # DOWNLOAD ALL RECORDS
+    # =========================
+    all_pdf = generate_pdf(
+        title="All Patient Records",
+        subtitle=f"User: {user['username']}",
+        df=df
+    )
+
+    st.download_button(
+        "📄 Download All Records",
+        data=all_pdf,
+        file_name="all_records.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Filter
-    st.markdown("<div class='glass-card'><h4>🔍 Filter & Search</h4>", unsafe_allow_html=True)
-    fc1, fc2 = st.columns(2)
-    with fc1: f_result = st.selectbox("Filter by Result", ["All","Diabetic","Non-Diabetic"])
-    with fc2: f_risk   = st.selectbox("Filter by Risk",   ["All","HIGH","MODERATE","LOW"])
+    # =========================
+    # DOWNLOAD SPECIFIC PATIENT
+    # =========================
+    st.markdown("<div class='glass-card'><h4>👤 Patient Report</h4>", unsafe_allow_html=True)
+
+    patients = get_patients(user["username"])
+
+    if patients:
+        p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
+        sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
+        sel_p = p_opts[sel_label]
+
+        p_records = get_patient_records(user["username"], sel_p[1])
+
+        if p_records:
+            p_df = pd.DataFrame(p_records, columns=RECORD_COLS)
+
+            st.dataframe(p_df, use_container_width=True, hide_index=True)
+
+            p_pdf = generate_pdf(
+                title=f"Patient Report - {sel_p[3]}",
+                subtitle=f"Patient ID: {sel_p[1]}",
+                df=p_df
+            )
+
+            st.download_button(
+                "📄 Download Patient Report",
+                data=p_pdf,
+                file_name=f"{sel_p[1]}_report.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        else:
+            st.warning("No records found for this patient")
+
     st.markdown("</div>", unsafe_allow_html=True)
-
-    fdf = df.copy()
-    if f_result != "All": fdf = fdf[fdf["Result"] == f_result]
-    if f_risk   != "All": fdf = fdf[fdf["RiskLevel"] == f_risk]
-
-    # Show records
-    st.markdown("<div class='glass-card'><h4>📋 Patient Records</h4>", unsafe_allow_html=True)
-    show_cols = ["PatientID","Name","Age","Sex","Glucose","BMI","BP","Result","Probability","RiskLevel","Date"]
-    show_df   = fdf[show_cols] if all(c in fdf.columns for c in show_cols) else fdf
-    st.dataframe(show_df, use_container_width=True, hide_index=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# Generate PDF
-p_pdf = generate_pdf(
-    title=f"Patient Report - {sel_p[3]}",   # name
-    subtitle=f"Patient ID: {sel_p[0]}",
-    df=p_show
-)
-
-# Download button
-st.download_button(
-    label="📄 Download Patient Report",
-    data=p_pdf,
-    file_name=f"patient_{sel_p[0]}.pdf",
-    mime="application/pdf",
-    use_container_width=True
-)
-
-st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-
-st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
-
-patients = get_patients(user["username"])
-
-if patients:
-    p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
-    sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
-    sel_p = p_opts[sel_label]
-
-    # ✅ correct filtering
-    p_records = get_patient_records(user["username"], sel_p[1])
-
-    if p_records:
-        p_df = pd.DataFrame(p_records, columns=RECORD_COLS)
-
-        p_show = p_df.drop(columns=["ID", "Username"], errors="ignore")
-
-        st.dataframe(p_show, use_container_width=True, hide_index=True)
-
-        # ✅ correct PDF generation
-        p_pdf = generate_pdf(
-            title=f"Patient Report - {sel_p[3]}",
-            subtitle=f"Patient ID: {sel_p[1]}",
-            df=p_show
-        )
-
-        st.download_button(
-            "📄 Download Patient Report",
-            data=p_pdf,
-            file_name=f"{sel_p[1]}_report.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
-    else:
-        st.warning("No records found for this patient")
-
-st.markdown("</div>", unsafe_allow_html=True)
 # ══════════════════════════════════════════════════════════
 # VISUALIZATION
 # ══════════════════════════════════════════════════════════
