@@ -606,6 +606,7 @@ def get_recommendation(prob):
     return "LOW RISK: Maintain healthy lifestyle, eat balanced diet, stay active, and get regular checkups."
 
 # ═════════════════════════
+#GENERATE PDF
 def generate_pdf(title, subtitle, df):
     from fpdf import FPDF
     import os
@@ -629,7 +630,7 @@ def generate_pdf(title, subtitle, df):
 
     pdf.ln(5)
 
-    # ✅ MUST be inside function
+    # ________RECORDS
     for i, (_, row) in enumerate(df.iterrows(), 1):
         result = str(row.get("Result", ""))
         prob = row.get("Probability", 0)
