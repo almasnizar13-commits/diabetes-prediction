@@ -1138,7 +1138,7 @@ st.download_button(
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
 # Specific patient
-      st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
+st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
     patients = get_patients(user["username"])
     if patients:
         p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
