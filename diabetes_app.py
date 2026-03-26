@@ -607,7 +607,8 @@ def get_recommendation(prob):
 
 # ══════════════════════════════════════════════════════════
 # PDF GENERATOR
-# ══════════════════════════════════════════════════════════def generate_pdf(patient_name, patient_id, records_df):
+# ══════════════════════════════════════════════════════════
+    def generate_pdf(patient_name, patient_id, records_df):
     from fpdf import FPDF
     import os
 
@@ -1179,12 +1180,15 @@ def page_records():
 
     # Download all PDF
     def generate_pdf(title, subtitle, df):
-      st.download_button(
-        "📄 Download All Records (PDF)",
-        data=all_pdf,
-        file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
+      
+       st.download_button(
+        label="Download Patient PDF",
+        data=p_pdf,
+        file_name="patient_report.pdf",
         mime="application/pdf",
-        use_container_width=True
+
+        file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
+       
     )
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
