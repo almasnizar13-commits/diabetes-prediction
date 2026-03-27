@@ -1,4 +1,3 @@
-
 import streamlit as st
 import sqlite3, hashlib, os, pickle, numpy as np, pandas as pd
 from datetime import datetime
@@ -13,31 +12,27 @@ st.set_page_config(page_title="Diabetes Prediction System", layout="wide")
 st.markdown("""
 <style>
 body {
-    background-image: url("https://images.unsplash.com/photo-1576091160399-112ba8d25d02?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); /* Diabetes-related image */
+    background-image: url("https://images.unsplash.com/photo-1576091160399-112ba8d25d02?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
     color: #333;
 }
 .stApp {
-    background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent white background for content */
+    background-color: rgba(255, 255, 255, 0.85);
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-h1, h2, h3, h4, h5, h6 {
-    color: #0056b3; /* A nice blue for headings */
-}
+h1, h2, h3, h4, h5, h6 { color: #0056b3; }
 .stButton>button {
-    background-color: #007bff; /* Blue button */
+    background-color: #007bff;
     color: white;
     border-radius: 5px;
     padding: 8px 15px;
     border: none;
 }
-.stButton>button:hover {
-    background-color: #0056b3;
-}
+.stButton>button:hover { background-color: #0056b3; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -58,8 +53,8 @@ c.execute("""CREATE TABLE IF NOT EXISTS patients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT, age INTEGER, gender TEXT,
             glucose REAL, bp REAL, insulin REAL,
-            bmi REAL, dpf REAL, risk_factors TEXT,
-            history TEXT, prediction TEXT, date TEXT
+            bmi REAL, dpf REAL, history TEXT,
+            prediction TEXT, date TEXT
             )""")
 conn.commit()
 
@@ -69,27 +64,25 @@ def hash_password(password):
 
 def add_user(username, password):
     try:
-        c.execute("INSERT INTO users (username,password) VALUES (?,?)", (username, hash_password(password)))
+        c.execute("INSERT INTO users (username,password) VALUES (?,?)", 
+                  (username, hash_password(password)))
         conn.commit()
     except:
         st.error("Username already exists")
 
 def check_user(username, password):
-    c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, hash_password(password)))
+    c.execute("SELECT * FROM users WHERE username=? AND password=?", 
+              (username, hash_password(password)))
     return c.fetchone()
 
 # Load ML model and scaler
-# Adjust path if necessary, assuming the script is run from the same directory as the 'model' folder
 model = pickle.load(open("diabetes_svm_model.pkl","rb"))
 scaler = pickle.load(open("scaler.pkl","rb"))
 
 def predict_diabetes(data):
-    # The original X_train had features ['Glucose', 'BloodPressure', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age']
-    # Ensure data order matches expected model input
-    data_for_scaling = np.array(data).reshape(1, -1)
-    data_scaled = scaler.transform(data_for_scaling)
-    prediction = model.predict(data_scaled)
-    return "Diabetic" if prediction[0]==1 else "Non-Diabetic"
+    data_scaled = scaler.transform([data])
+    pred = model.predict(data_scaled)
+    return "Diabetic" if pred[0]==1 else "Non-Diabetic"
 
 def health_tips(prediction):
     if prediction=="Diabetic":
@@ -108,11 +101,10 @@ def generate_pdf(patient):
     c_pdf.drawString(100,650,f"Insulin: {patient['insulin']}")
     c_pdf.drawString(100,630,f"BMI: {patient['bmi']}")
     c_pdf.drawString(100,610,f"DPF: {patient['dpf']}")
-    c_pdf.drawString(100,590,f"Risk Factors: {patient['risk_factors']}")
-    c_pdf.drawString(100,570,f"History: {patient['history']}")
-    c_pdf.drawString(100,550,f"Prediction: {patient['prediction']}")
-    c_pdf.drawString(100,530,"Health Tips:")
-    y = 510
+    c_pdf.drawString(100,590,f"Medical History: {patient['history']}")
+    c_pdf.drawString(100,570,f"Prediction: {patient['prediction']}")
+    c_pdf.drawString(100,550,"Health Tips:")
+    y = 530
     for tip in patient['tips']:
         c_pdf.drawString(120, y, f"- {tip}")
         y -= 20
@@ -136,7 +128,7 @@ if not st.session_state.logged_in:
         if user:
             st.session_state.logged_in = True
             st.session_state.username = username
-            st.rerun() # Changed from st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid username or password")
     st.subheader("New User? Register")
@@ -153,7 +145,7 @@ if st.session_state.logged_in:
     
     if menu=="Logout":
         st.session_state.logged_in = False
-        st.rerun() # Changed from st.experimental_rerun()
+        st.rerun()
 
     # ---------------- Add Patient ----------------
     if menu=="Add Patient":
@@ -167,28 +159,31 @@ if st.session_state.logged_in:
             insulin = st.number_input("Insulin", value=0.0, format="%.2f")
             bmi = st.number_input("BMI", value=0.0, format="%.2f")
             dpf = st.number_input("Diabetes Pedigree Function", value=0.0, format="%.3f")
-            risk_factors = st.text_area("Risk Factors")
-            history = st.text_area("History")
+            history = st.text_area("Medical History", help="Enter previous medical history")
             submitted = st.form_submit_button("Predict & Save")
+            
             if submitted:
-                # Ensure the order of features matches the training data
-                # The original features after processing were: ['Glucose', 'BloodPressure', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age']
-                patient_data = [glucose, bp, insulin, bmi, dpf, age]
-                prediction = predict_diabetes(patient_data)
-                tips = health_tips(prediction)
-                date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                c.execute("""INSERT INTO patients (name, age, gender, glucose, bp, insulin, bmi, dpf, risk_factors, history, prediction, date)
-                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                             (name, age, gender, glucose, bp, insulin, bmi, dpf, risk_factors, history, prediction, date))
-                conn.commit()
-                patient_id = c.lastrowid
-                patient_dict = {"id": patient_id, "name": name, "age": age, "gender": gender,
-                                "glucose": glucose, "bp": bp, "insulin": insulin, "bmi": bmi, "dpf": dpf,
-                                "risk_factors": risk_factors, "history": history, "prediction": prediction, "tips": tips}
-                pdf_file = generate_pdf(patient_dict)
-                st.success(f"Patient saved. Prediction: {prediction}")
-                with open(pdf_file, "rb") as file:
-                    st.download_button("Download PDF Report", file.read(), file_name=f"{name}_{patient_id}.pdf", mime="application/pdf")
+                if not name or not history:
+                    st.warning("Please fill all required fields including medical history.")
+                else:
+                    patient_data = [glucose, bp, insulin, bmi, dpf, age]
+                    prediction = predict_diabetes(patient_data)
+                    tips = health_tips(prediction)
+                    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    c.execute("""INSERT INTO patients (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date)
+                                 VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                              (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date))
+                    conn.commit()
+                    patient_id = c.lastrowid
+                    
+                    patient_dict = {"id": patient_id, "name": name, "age": age, "gender": gender,
+                                    "glucose": glucose, "bp": bp, "insulin": insulin, "bmi": bmi, "dpf": dpf,
+                                    "history": history, "prediction": prediction, "tips": tips}
+                    pdf_file = generate_pdf(patient_dict)
+                    st.success(f"Patient saved. Prediction: {prediction}")
+                    with open(pdf_file, "rb") as file:
+                        st.download_button("Download PDF Report", file.read(), file_name=f"{name}_{patient_id}.pdf", mime="application/pdf")
 
     # ---------------- View Patients ----------------
     if menu=="View Patients":
@@ -202,7 +197,6 @@ if st.session_state.logged_in:
             fig = px.histogram(df, x="glucose", nbins=20, title="Glucose Level Distribution")
             st.plotly_chart(fig)
 
-            # Bar chart for Prediction Outcome distribution
             st.subheader("Prediction Outcome Distribution")
             outcome_counts = df['prediction'].value_counts().reset_index()
             outcome_counts.columns = ['Outcome', 'Count']
@@ -212,25 +206,20 @@ if st.session_state.logged_in:
                                  color_discrete_map={'Diabetic': 'red', 'Non-Diabetic': 'green'})
             st.plotly_chart(fig_outcome)
 
-            # Display Risk Factors and History for selected patient
             st.subheader("Patient Specific Details")
             patient_names = df['name'].unique()
             selected_name = st.selectbox("Select Patient to view details:", patient_names)
-
             if selected_name:
-                selected_patient_df = df[df['name'] == selected_name].iloc[0]
+                selected_patient_df = df[df['name']==selected_name].iloc[0]
                 st.write(f"**Name:** {selected_patient_df['name']}")
                 st.write(f"**Age:** {selected_patient_df['age']}")
                 st.write(f"**Gender:** {selected_patient_df['gender']}")
                 st.write(f"**Prediction:** {selected_patient_df['prediction']}")
-                st.markdown(f"**Risk Factors:** {selected_patient_df['risk_factors']}")
-                st.markdown(f"**History:** {selected_patient_df['history']}")
+                st.markdown(f"**Medical History:** {selected_patient_df['history']}")
                 st.markdown(f"**Date Recorded:** {selected_patient_df['date']}")
 
-                # Offer individual PDF download here as well
-                patient_id = selected_patient_df['id']
                 patient_dict_for_pdf = {
-                    "id": patient_id,
+                    "id": selected_patient_df['id'],
                     "name": selected_patient_df['name'],
                     "age": selected_patient_df['age'],
                     "gender": selected_patient_df['gender'],
@@ -239,20 +228,17 @@ if st.session_state.logged_in:
                     "insulin": selected_patient_df['insulin'],
                     "bmi": selected_patient_df['bmi'],
                     "dpf": selected_patient_df['dpf'],
-                    "risk_factors": selected_patient_df['risk_factors'],
                     "history": selected_patient_df['history'],
                     "prediction": selected_patient_df['prediction'],
-                    "tips": health_tips(selected_patient_df['prediction']) # Re-generate tips for PDF
+                    "tips": health_tips(selected_patient_df['prediction'])
                 }
                 pdf_file_selected = generate_pdf(patient_dict_for_pdf)
                 with open(pdf_file_selected, "rb") as file:
                     st.download_button(
                         "Download PDF for Selected Patient",
                         file.read(),
-                        file_name=f"{selected_patient_df['name']}_{patient_id}.pdf",
+                        file_name=f"{selected_patient_df['name']}_{selected_patient_df['id']}.pdf",
                         mime="application/pdf"
                     )
-
-
         else:
             st.info("No patient records found yet.")
