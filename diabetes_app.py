@@ -1,220 +1,192 @@
 import streamlit as st
-import sqlite3
-import pandas as pd
-import numpy as np
-import pickle
-import hashlib
+import sqlite3, hashlib, os, pickle, numpy as np, pandas as pd
 from datetime import datetime
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 import plotly.express as px
-from fpdf import FPDF
 
-# =========================
-# CONFIG + CSS
-# =========================
-st.set_page_config(layout="wide")
 
-st.markdown("""
-<style>
-body {background-color:#0e1117; color:white;}
-.block-container {padding:2rem;}
-</style>
-""", unsafe_allow_html=True)
 
-# =========================
-# LOAD MODEL
-# =========================
-model = pickle.load(open("diabetes_svm_model.pkl","rb"))
-scaler = pickle.load(open("scaler.pkl","rb"))
+body {
+    background-color: #f9f9f9;
+    font-family: 'Arial', sans-serif;
+}
 
-# =========================
-# DATABASE
-# =========================
-conn = sqlite3.connect("diabetes.db", check_same_thread=False)
+h1, h2, h3 {
+    color: #2F4F4F;
+}
+
+.stButton button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.stButton button:hover {
+    background-color: #45a049;
+}
+
+.stTextInput>div>input {
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    padding: 5px;
+}
+# ---------------- Setup ----------------
+st.set_page_config(page_title="Diabetes Prediction System", layout="wide")
+st.markdown('<link rel="stylesheet" href="static/style.css">', unsafe_allow_html=True)
+
+os.makedirs("reports", exist_ok=True)
+os.makedirs("database", exist_ok=True)
+
+# ---------------- Database ----------------
+conn = sqlite3.connect("database/patients.db", check_same_thread=False)
 c = conn.cursor()
 
-c.execute("CREATE TABLE IF NOT EXISTS users(username TEXT, password TEXT, role TEXT)")
-c.execute("CREATE TABLE IF NOT EXISTS patients(username TEXT, patient_id TEXT, name TEXT, age INT, gender TEXT)")
-c.execute("""CREATE TABLE IF NOT EXISTS records(
-    username TEXT, patient_id TEXT, date TEXT,
-    glucose REAL, bmi REAL, bp REAL, insulin REAL,
-    result TEXT, prob REAL, risk TEXT)""")
+c.execute("""CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+            )""")
+
+c.execute("""CREATE TABLE IF NOT EXISTS patients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT, age INTEGER, gender TEXT,
+            glucose REAL, bp REAL, insulin REAL,
+            bmi REAL, dpf REAL, risk_factors TEXT,
+            history TEXT, prediction TEXT, date TEXT
+            )""")
 conn.commit()
 
-# =========================
-# AUTH
-# =========================
-def hash_pass(p):
-    return hashlib.sha256(p.encode()).hexdigest()
+# ---------------- Helper Functions ----------------
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
-def login(u,p):
-    return c.execute("SELECT * FROM users WHERE username=? AND password=?",
-                     (u,hash_pass(p))).fetchone()
-
-def register(u,p):
-    c.execute("INSERT INTO users VALUES (?,?,?)",(u,hash_pass(p),"user"))
-    conn.commit()
-
-# =========================
-# HELPERS
-# =========================
-def get_risk(prob):
-    if prob > 0.7: return "HIGH"
-    elif prob > 0.4: return "MEDIUM"
-    return "LOW"
-
-def generate_pdf(df):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=10)
-
-    for _,row in df.iterrows():
-        pdf.cell(0,8,f"{row['patient_id']} | {row['result']} | {row['risk']}",ln=True)
-
-    out = pdf.output(dest='S')
-    return out if isinstance(out, bytes) else out.encode('latin1')
-
-# =========================
-# SESSION
-# =========================
-if "user" not in st.session_state:
-    st.session_state.user = None
-    st.session_state.role = None
-
-# =========================
-# LOGIN PAGE
-# =========================
-def login_page():
-    st.title("Login")
-
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        data = login(u,p)
-        if data:
-            st.session_state.user = data[0]
-            st.session_state.role = data[2]
-            st.rerun()
-        else:
-            st.error("Wrong credentials")
-
-    if st.button("Register"):
-        register(u,p)
-        st.success("Account created")
-
-# =========================
-# ADD PATIENT
-# =========================
-def patient_page():
-    st.subheader("Add Patient")
-
-    pid = st.text_input("Patient ID")
-    name = st.text_input("Name")
-    age = st.number_input("Age",1,120)
-    gender = st.selectbox("Gender",["Male","Female"])
-
-    if st.button("Save"):
-        c.execute("INSERT INTO patients VALUES (?,?,?,?,?)",
-                  (st.session_state.user,pid,name,age,gender))
+def add_user(username, password):
+    try:
+        c.execute("INSERT INTO users (username,password) VALUES (?,?)", (username, hash_password(password)))
         conn.commit()
-        st.success("Saved")
+    except:
+        st.error("Username already exists")
 
-# =========================
-# PREDICTION
-# =========================
-def prediction_page():
-    df = pd.read_sql(f"SELECT * FROM patients WHERE username='{st.session_state.user}'",conn)
+def check_user(username, password):
+    c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, hash_password(password)))
+    return c.fetchone()
 
-    if df.empty:
-        st.warning("Add patient first")
-        return
+# Load ML model and scaler
+model = pickle.load(open("model/diabetes_svm_model.pkl","rb"))
+scaler = pickle.load(open("model/scaler.pkl","rb"))
 
-    pid = st.selectbox("Patient", df["patient_id"])
+def predict_diabetes(data):
+    data_scaled = scaler.transform([data])
+    prediction = model.predict(data_scaled)
+    return "Diabetic" if prediction[0]==1 else "Non-Diabetic"
 
-    glucose = st.slider("Glucose",0,200)
-    bmi = st.slider("BMI",10.0,50.0)
-    bp = st.slider("BP",0,150)
-    insulin = st.slider("Insulin",0,300)
-
-    if st.button("Predict"):
-        data = scaler.transform([[glucose,bmi,bp,insulin]])
-        pred = model.predict(data)[0]
-        prob = abs(model.decision_function(data)[0])
-
-        res = "Diabetic" if pred else "Non-Diabetic"
-        risk = get_risk(prob)
-
-        st.success(f"{res} | {risk}")
-
-        c.execute("INSERT INTO records VALUES (?,?,?,?,?,?,?,?,?,?)",
-                  (st.session_state.user,pid,datetime.now(),
-                   glucose,bmi,bp,insulin,res,prob,risk))
-        conn.commit()
-
-# =========================
-# DASHBOARD
-# =========================
-def dashboard_page():
-    df = pd.read_sql(f"SELECT * FROM records WHERE username='{st.session_state.user}'",conn)
-
-    if df.empty:
-        st.info("No data")
-        return
-
-    col1,col2 = st.columns(2)
-
-    col1.plotly_chart(px.pie(df,names="risk",title="Risk Distribution"))
-    col2.plotly_chart(px.histogram(df,x="glucose",title="Glucose"))
-
-    st.plotly_chart(px.scatter(df,x="bmi",y="glucose",color="risk"))
-
-# =========================
-# RECORDS
-# =========================
-def records_page():
-    df = pd.read_sql(f"SELECT * FROM records WHERE username='{st.session_state.user}'",conn)
-
-    st.dataframe(df)
-
-    csv = df.to_csv(index=False).encode()
-    st.download_button("CSV",csv)
-
-    pdf = generate_pdf(df)
-    st.download_button("PDF",pdf)
-
-# =========================
-# ADMIN
-# =========================
-def admin_page():
-    st.title("Admin Panel")
-
-    df = pd.read_sql("SELECT * FROM records",conn)
-
-    st.metric("Total Records", len(df))
-    st.metric("Diabetic", len(df[df['result']=="Diabetic"]))
-
-    st.plotly_chart(px.box(df,y="bmi"))
-
-# =========================
-# MAIN ROUTER
-# =========================
-if not st.session_state.user:
-    login_page()
-
-else:
-    role = st.session_state.role
-
-    if role == "admin":
-        menu = st.sidebar.radio("Menu",["Admin","Logout"])
+def health_tips(prediction):
+    if prediction=="Diabetic":
+        return ["Monitor sugar daily", "Exercise 30 min/day", "Avoid sugary food"]
     else:
-        menu = st.sidebar.radio("Menu",
-            ["Patient","Prediction","Dashboard","Records","Logout"])
+        return ["Maintain healthy diet", "Regular check-ups", "Exercise regularly"]
 
-    if menu == "Patient": patient_page()
-    elif menu == "Prediction": prediction_page()
-    elif menu == "Dashboard": dashboard_page()
-    elif menu == "Records": records_page()
-    elif menu == "Admin": admin_page()
-    elif menu == "Logout":
-        st.session_state.user = None
-        st.rerun()
+def generate_pdf(patient):
+    filename = f"reports/{patient['name']}_{patient['id']}.pdf"
+    c_pdf = canvas.Canvas(filename, pagesize=letter)
+    c_pdf.drawString(100,750,f"Patient Name: {patient['name']}")
+    c_pdf.drawString(100,730,f"Age: {patient['age']}")
+    c_pdf.drawString(100,710,f"Gender: {patient['gender']}")
+    c_pdf.drawString(100,690,f"Glucose: {patient['glucose']}")
+    c_pdf.drawString(100,670,f"BP: {patient['bp']}")
+    c_pdf.drawString(100,650,f"Insulin: {patient['insulin']}")
+    c_pdf.drawString(100,630,f"BMI: {patient['bmi']}")
+    c_pdf.drawString(100,610,f"DPF: {patient['dpf']}")
+    c_pdf.drawString(100,590,f"Risk Factors: {patient['risk_factors']}")
+    c_pdf.drawString(100,570,f"History: {patient['history']}")
+    c_pdf.drawString(100,550,f"Prediction: {patient['prediction']}")
+    c_pdf.drawString(100,530,"Health Tips:")
+    y = 510
+    for tip in patient['tips']:
+        c_pdf.drawString(120, y, f"- {tip}")
+        y -= 20
+    c_pdf.save()
+    return filename
+
+# ---------------- Session State ----------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+
+st.title("Diabetes Prediction System")
+
+# ---------------- Login ----------------
+if not st.session_state.logged_in:
+    st.subheader("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        user = check_user(username, password)
+        if user:
+            st.session_state.logged_in = True
+            st.session_state.username = username
+        else:
+            st.error("Invalid username or password")
+    st.subheader("New User? Register")
+    new_username = st.text_input("New Username")
+    new_password = st.text_input("New Password", type="password")
+    if st.button("Register"):
+        add_user(new_username, new_password)
+        st.success("User created! Please login.")
+
+# ---------------- Dashboard ----------------
+if st.session_state.logged_in:
+    st.sidebar.success(f"Logged in as {st.session_state.username}")
+    menu = st.sidebar.selectbox("Menu", ["Add Patient","View Patients","Logout"])
+    
+    if menu=="Logout":
+        st.session_state.logged_in = False
+        st.experimental_rerun()
+
+    # ---------------- Add Patient ----------------
+    if menu=="Add Patient":
+        st.subheader("Add Patient Details")
+        with st.form("patient_form"):
+            name = st.text_input("Name")
+            age = st.number_input("Age", min_value=0, max_value=120)
+            gender = st.selectbox("Gender", ["Male","Female","Other"])
+            glucose = st.number_input("Glucose")
+            bp = st.number_input("Blood Pressure")
+            insulin = st.number_input("Insulin")
+            bmi = st.number_input("BMI")
+            dpf = st.number_input("DPF")
+            risk_factors = st.text_area("Risk Factors")
+            history = st.text_area("History")
+            submitted = st.form_submit_button("Predict & Save")
+            if submitted:
+                patient_data = [glucose,bp,insulin,bmi,dpf,age]
+                prediction = predict_diabetes(patient_data)
+                tips = health_tips(prediction)
+                date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                c.execute("""INSERT INTO patients (name, age, gender, glucose, bp, insulin, bmi, dpf, risk_factors, history, prediction, date)
+                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                             (name, age, gender, glucose, bp, insulin, bmi, dpf, risk_factors, history, prediction, date))
+                conn.commit()
+                patient_id = c.lastrowid
+                patient_dict = {"id": patient_id, "name": name, "age": age, "gender": gender,
+                                "glucose": glucose, "bp": bp, "insulin": insulin, "bmi": bmi, "dpf": dpf,
+                                "risk_factors": risk_factors, "history": history, "prediction": prediction, "tips": tips}
+                pdf_file = generate_pdf(patient_dict)
+                st.success(f"Patient saved. Prediction: {prediction}")
+                st.download_button("Download PDF Report", pdf_file, file_name=f"{name}_{patient_id}.pdf")
+
+    # ---------------- View Patients ----------------
+    if menu=="View Patients":
+        st.subheader("All Patients Records")
+        df = pd.read_sql("SELECT * FROM patients", conn)
+        if not df.empty:
+            st.dataframe(df)
+            st.download_button("Download All Records CSV", df.to_csv(index=False), file_name="all_patients.csv")
+            
+            st.subheader("Glucose Distribution")
+            fig = px.histogram(df, x="glucose", nbins=20, title="Glucose Level Distribution")
+            st.plotly_chart(fig)
