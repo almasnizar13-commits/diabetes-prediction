@@ -439,7 +439,7 @@ h1,h2,h3,h4,h5,h6 { color: var(--text) !important; }
 # ══════════════════════════════════════════════════════════
 # DATABASE
 # ══════════════════════════════════════════════════════════
-conn = sqlite3.connect("diabetespro.db", check_same_thread=False)
+conn = sqlite3.connect("diabetes.db", check_same_thread=False)
 c    = conn.cursor()
 
 def create_tables():
@@ -502,7 +502,7 @@ def create_tables():
     try:
         pw = hashlib.sha256("admin123".encode()).hexdigest()
         c.execute("INSERT OR IGNORE INTO users (username,password,fullname,email,role,joined) VALUES (?,?,?,?,?,?)",
-                  ("admin", pw, "Administrator", "admin@diabetespro.com", "admin",
+                  ("admin", pw, "Administrator", "admin@diabetes.com", "admin",
                    datetime.now().strftime("%d/%m/%Y")))
         conn.commit()
     except: pass
@@ -729,7 +729,7 @@ def show_auth():
     <div style='text-align:center; padding:48px 0 24px;'>
         <div style='font-size:56px; margin-bottom:12px;'>🩺</div>
         <div style='font-family:"Playfair Display",serif; font-size:38px; font-weight:800; color:white; margin-bottom:8px;'>
-            Diabetes Prediction System <span style='color:#0fd4c8;'>Pro</span>
+            Diabetes Prediction System <span style='color:#0fd4c8;'></span>
         </div>
         <p style='color:#5a7a9a; font-size:14px; letter-spacing:2px; text-transform:uppercase;'>
             Smart Diabetes Prediction 
@@ -834,7 +834,7 @@ def show_nav():
         <div style='display:flex; align-items:center; gap:10px;'>
             <span style='font-size:22px;'>🩺</span>
             <div style='font-family:"Playfair Display",serif; font-size:18px; font-weight:800; color:white;'>
-                Diabetes Prediction System <span style='color:#0fd4c8;'>Pro</span>
+                Diabetes Prediction System <span style='color:#0fd4c8;'></span>
             </div>
         </div>
         <div style='display:flex; align-items:center; gap:8px;'>
