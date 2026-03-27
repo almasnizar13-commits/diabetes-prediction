@@ -668,21 +668,21 @@ def generate_pdf(patient_name, patient_id, records_df):
         pdf.set_font("Helvetica","B", 11)
         pdf.set_text_color(*r_color)
         pdf.set_x(15)
-        pdf.cell(0, 10, f"Record #{i}  —  {result}  |  Probability: {prob}%  |  Risk: {risk}", ln=True)
+        pdf.cell(0, 10, f"Record #{i}  -  {result}  |  Probability: {prob}%  |  Risk: {risk}", ln=True)
 
         # Fields
         pdf.set_fill_color(8, 18, 35)
         pdf.set_draw_color(20, 37, 64)
         pdf.set_line_width(0.2)
         fields = [
-            ("Date",     row.get("Date","—")),
-            ("Age",      str(row.get("Age","—"))),
-            ("Sex",      row.get("Sex","—")),
-            ("Glucose",  f"{row.get('Glucose','—')} mg/dL"),
-            ("Blood Pressure", f"{row.get('BP','—')} mmHg"),
-            ("Insulin",  f"{row.get('Insulin','—')} uU/mL"),
-            ("BMI",      f"{row.get('BMI','—')} kg/m2"),
-            ("DPF",      str(row.get("DPF","—"))),
+            ("Date",     row.get("Date","-")),
+            ("Age",      str(row.get("Age","-"))),
+            ("Sex",      row.get("Sex","-")),
+            ("Glucose",  f"{row.get('Glucose','-')} mg/dL"),
+            ("Blood Pressure", f"{row.get('BP','-')} mmHg"),
+            ("Insulin",  f"{row.get('Insulin','-')} uU/mL"),
+            ("BMI",      f"{row.get('BMI','-')} kg/m2"),
+            ("DPF",      str(row.get("DPF","-"))),
         ]
         pdf.set_text_color(100, 150, 180)
         pdf.set_font("Helvetica","", 10)
@@ -717,7 +717,7 @@ def generate_pdf(patient_name, patient_id, records_df):
     pdf.set_fill_color(6, 20, 45)
     pdf.set_text_color(15, 212, 200)
     pdf.set_font("Helvetica","I", 8)
-    pdf.cell(0, 8, "DiabetesAI Pro  —  For educational purposes only. Not a substitute for medical advice.", fill=True, ln=True, align='C')
+    pdf.cell(0, 8, "Diabetes Prediction System ", fill=True, ln=True, align='C')
 
     return bytes(pdf.output())
 
