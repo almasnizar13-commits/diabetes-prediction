@@ -6,6 +6,12 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import plotly.express as px
 
+# ---------------- Setup ----------------
+st.set_page_config(page_title="Diabetes Prediction System", layout="wide")
+
+# Embedded CSS
+st.markdown("""
+<style>
 body {
     background-image: url("https://images.unsplash.com/photo-1576091160399-112ba8d25d02?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); /* Diabetes-related image */
     background-size: cover;
@@ -15,7 +21,7 @@ body {
 }
 .stApp {
     background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent white background for content */
-    padding: 10px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -32,11 +38,8 @@ h1, h2, h3, h4, h5, h6 {
 .stButton>button:hover {
     background-color: #0056b3;
 }
-
-
-# ---------------- Setup ----------------
-st.set_page_config(page_title="Diabetes Prediction System", layout="wide")
-st.markdown('<link rel="stylesheet" href="static/style.css">', unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
 os.makedirs("reports", exist_ok=True)
 os.makedirs("database", exist_ok=True)
