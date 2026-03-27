@@ -136,7 +136,7 @@ if not st.session_state.logged_in:
         if user:
             st.session_state.logged_in = True
             st.session_state.username = username
-            st.rerun()
+            st.rerun() # Changed from st.experimental_rerun()
         else:
             st.error("Invalid username or password")
     st.subheader("New User? Register")
@@ -153,7 +153,7 @@ if st.session_state.logged_in:
     
     if menu=="Logout":
         st.session_state.logged_in = False
-        st.rerun()
+        st.rerun() # Changed from st.experimental_rerun()
 
     # ---------------- Add Patient ----------------
     if menu=="Add Patient":
@@ -202,7 +202,7 @@ if st.session_state.logged_in:
             fig = px.histogram(df, x="glucose", nbins=20, title="Glucose Level Distribution")
             st.plotly_chart(fig)
 
-            # New: Bar chart for Prediction Outcome distribution
+            # Bar chart for Prediction Outcome distribution
             st.subheader("Prediction Outcome Distribution")
             outcome_counts = df['prediction'].value_counts().reset_index()
             outcome_counts.columns = ['Outcome', 'Count']
@@ -211,6 +211,48 @@ if st.session_state.logged_in:
                                  color='Outcome',
                                  color_discrete_map={'Diabetic': 'red', 'Non-Diabetic': 'green'})
             st.plotly_chart(fig_outcome)
+
+            # Display Risk Factors and History for selected patient
+            st.subheader("Patient Specific Details")
+            patient_names = df['name'].unique()
+            selected_name = st.selectbox("Select Patient to view details:", patient_names)
+
+            if selected_name:
+                selected_patient_df = df[df['name'] == selected_name].iloc[0]
+                st.write(f"**Name:** {selected_patient_df['name']}")
+                st.write(f"**Age:** {selected_patient_df['age']}")
+                st.write(f"**Gender:** {selected_patient_df['gender']}")
+                st.write(f"**Prediction:** {selected_patient_df['prediction']}")
+                st.markdown(f"**Risk Factors:** {selected_patient_df['risk_factors']}")
+                st.markdown(f"**History:** {selected_patient_df['history']}")
+                st.markdown(f"**Date Recorded:** {selected_patient_df['date']}")
+
+                # Offer individual PDF download here as well
+                patient_id = selected_patient_df['id']
+                patient_dict_for_pdf = {
+                    "id": patient_id,
+                    "name": selected_patient_df['name'],
+                    "age": selected_patient_df['age'],
+                    "gender": selected_patient_df['gender'],
+                    "glucose": selected_patient_df['glucose'],
+                    "bp": selected_patient_df['bp'],
+                    "insulin": selected_patient_df['insulin'],
+                    "bmi": selected_patient_df['bmi'],
+                    "dpf": selected_patient_df['dpf'],
+                    "risk_factors": selected_patient_df['risk_factors'],
+                    "history": selected_patient_df['history'],
+                    "prediction": selected_patient_df['prediction'],
+                    "tips": health_tips(selected_patient_df['prediction']) # Re-generate tips for PDF
+                }
+                pdf_file_selected = generate_pdf(patient_dict_for_pdf)
+                with open(pdf_file_selected, "rb") as file:
+                    st.download_button(
+                        "Download PDF for Selected Patient",
+                        file.read(),
+                        file_name=f"{selected_patient_df['name']}_{patient_id}.pdf",
+                        mime="application/pdf"
+                    )
+
 
         else:
             st.info("No patient records found yet.")
