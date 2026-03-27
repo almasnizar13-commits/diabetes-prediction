@@ -1,4 +1,4 @@
-%%writefile app.py
+
 import streamlit as st
 import sqlite3, hashlib, os, pickle, numpy as np, pandas as pd
 from datetime import datetime
