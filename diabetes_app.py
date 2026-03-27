@@ -1,4 +1,4 @@
-
+%%writefile app.py
 import streamlit as st
 import sqlite3, hashlib, os, pickle, numpy as np, pandas as pd
 from datetime import datetime
@@ -136,7 +136,7 @@ if not st.session_state.logged_in:
         if user:
             st.session_state.logged_in = True
             st.session_state.username = username
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid username or password")
     st.subheader("New User? Register")
@@ -153,7 +153,7 @@ if st.session_state.logged_in:
     
     if menu=="Logout":
         st.session_state.logged_in = False
-        st.experimental_rerun()
+        st.rerun()
 
     # ---------------- Add Patient ----------------
     if menu=="Add Patient":
