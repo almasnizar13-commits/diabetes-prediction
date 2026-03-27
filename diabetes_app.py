@@ -80,8 +80,8 @@ def check_user(username, password):
 
 # Load ML model and scaler
 # Adjust path if necessary, assuming the script is run from the same directory as the 'model' folder
-model = pickle.load(open("model/diabetes_svm_model.pkl","rb"))
-scaler = pickle.load(open("model/scaler.pkl","rb"))
+model = pickle.load(open("diabetes_svm_model.pkl","rb"))
+scaler = pickle.load(open("scaler.pkl","rb"))
 
 def predict_diabetes(data):
     # The original X_train had features ['Glucose', 'BloodPressure', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age']
