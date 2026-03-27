@@ -1,3 +1,4 @@
+%%writefile app.py
 import streamlit as st
 import sqlite3, hashlib, os, pickle, numpy as np, pandas as pd
 from datetime import datetime
@@ -5,35 +6,34 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import plotly.express as px
 
-
-
 body {
-    background-color: #f9f9f9;
-    font-family: 'Arial', sans-serif;
+    background-image: url("https://images.unsplash.com/photo-1576091160399-112ba8d25d02?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); /* Diabetes-related image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #333;
 }
-
-h1, h2, h3 {
-    color: #2F4F4F;
+.stApp {
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent white background for content */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
-.stButton button {
-    background-color: #4CAF50;
+h1, h2, h3, h4, h5, h6 {
+    color: #0056b3; /* A nice blue for headings */
+}
+.stButton>button {
+    background-color: #007bff; /* Blue button */
     color: white;
-    padding: 8px 20px;
+    border-radius: 5px;
+    padding: 8px 15px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
+}
+.stButton>button:hover {
+    background-color: #0056b3;
 }
 
-.stButton button:hover {
-    background-color: #45a049;
-}
 
-.stTextInput>div>input {
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    padding: 5px;
-}
 # ---------------- Setup ----------------
 st.set_page_config(page_title="Diabetes Prediction System", layout="wide")
 st.markdown('<link rel="stylesheet" href="static/style.css">', unsafe_allow_html=True)
@@ -76,11 +76,15 @@ def check_user(username, password):
     return c.fetchone()
 
 # Load ML model and scaler
+# Adjust path if necessary, assuming the script is run from the same directory as the 'model' folder
 model = pickle.load(open("model/diabetes_svm_model.pkl","rb"))
 scaler = pickle.load(open("model/scaler.pkl","rb"))
 
 def predict_diabetes(data):
-    data_scaled = scaler.transform([data])
+    # The original X_train had features ['Glucose', 'BloodPressure', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age']
+    # Ensure data order matches expected model input
+    data_for_scaling = np.array(data).reshape(1, -1)
+    data_scaled = scaler.transform(data_for_scaling)
     prediction = model.predict(data_scaled)
     return "Diabetic" if prediction[0]==1 else "Non-Diabetic"
 
@@ -129,11 +133,12 @@ if not st.session_state.logged_in:
         if user:
             st.session_state.logged_in = True
             st.session_state.username = username
+            st.experimental_rerun()
         else:
             st.error("Invalid username or password")
     st.subheader("New User? Register")
-    new_username = st.text_input("New Username")
-    new_password = st.text_input("New Password", type="password")
+    new_username = st.text_input("New Username", key="new_username")
+    new_password = st.text_input("New Password", type="password", key="new_password")
     if st.button("Register"):
         add_user(new_username, new_password)
         st.success("User created! Please login.")
@@ -154,16 +159,18 @@ if st.session_state.logged_in:
             name = st.text_input("Name")
             age = st.number_input("Age", min_value=0, max_value=120)
             gender = st.selectbox("Gender", ["Male","Female","Other"])
-            glucose = st.number_input("Glucose")
-            bp = st.number_input("Blood Pressure")
-            insulin = st.number_input("Insulin")
-            bmi = st.number_input("BMI")
-            dpf = st.number_input("DPF")
+            glucose = st.number_input("Glucose", value=0.0, format="%.2f")
+            bp = st.number_input("Blood Pressure", value=0.0, format="%.2f")
+            insulin = st.number_input("Insulin", value=0.0, format="%.2f")
+            bmi = st.number_input("BMI", value=0.0, format="%.2f")
+            dpf = st.number_input("Diabetes Pedigree Function", value=0.0, format="%.3f")
             risk_factors = st.text_area("Risk Factors")
             history = st.text_area("History")
             submitted = st.form_submit_button("Predict & Save")
             if submitted:
-                patient_data = [glucose,bp,insulin,bmi,dpf,age]
+                # Ensure the order of features matches the training data
+                # The original features after processing were: ['Glucose', 'BloodPressure', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age']
+                patient_data = [glucose, bp, insulin, bmi, dpf, age]
                 prediction = predict_diabetes(patient_data)
                 tips = health_tips(prediction)
                 date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -177,7 +184,8 @@ if st.session_state.logged_in:
                                 "risk_factors": risk_factors, "history": history, "prediction": prediction, "tips": tips}
                 pdf_file = generate_pdf(patient_dict)
                 st.success(f"Patient saved. Prediction: {prediction}")
-                st.download_button("Download PDF Report", pdf_file, file_name=f"{name}_{patient_id}.pdf")
+                with open(pdf_file, "rb") as file:
+                    st.download_button("Download PDF Report", file.read(), file_name=f"{name}_{patient_id}.pdf", mime="application/pdf")
 
     # ---------------- View Patients ----------------
     if menu=="View Patients":
@@ -185,8 +193,21 @@ if st.session_state.logged_in:
         df = pd.read_sql("SELECT * FROM patients", conn)
         if not df.empty:
             st.dataframe(df)
-            st.download_button("Download All Records CSV", df.to_csv(index=False), file_name="all_patients.csv")
+            st.download_button("Download All Records CSV", df.to_csv(index=False).encode('utf-8'), file_name="all_patients.csv", mime="text/csv")
             
             st.subheader("Glucose Distribution")
             fig = px.histogram(df, x="glucose", nbins=20, title="Glucose Level Distribution")
             st.plotly_chart(fig)
+
+            # New: Bar chart for Prediction Outcome distribution
+            st.subheader("Prediction Outcome Distribution")
+            outcome_counts = df['prediction'].value_counts().reset_index()
+            outcome_counts.columns = ['Outcome', 'Count']
+            fig_outcome = px.bar(outcome_counts, x='Outcome', y='Count',
+                                 title='Diabetes Prediction Outcomes',
+                                 color='Outcome',
+                                 color_discrete_map={'Diabetic': 'red', 'Non-Diabetic': 'green'})
+            st.plotly_chart(fig_outcome)
+
+        else:
+            st.info("No patient records found yet.")
