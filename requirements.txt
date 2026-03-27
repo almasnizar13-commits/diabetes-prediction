@@ -1,6 +1,6 @@
 streamlit
-pandas
-numpy
 scikit-learn
-reportlab
+numpy
+pandas
+fpdf2
 plotly
