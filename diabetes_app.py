@@ -150,40 +150,39 @@ if st.session_state.logged_in:
     # ---------------- Add Patient ----------------
     if menu=="Add Patient":
         st.subheader("Add Patient Details")
-        with st.form("patient_form"):
-            name = st.text_input("Name")
-            age = st.number_input("Age", min_value=0, max_value=120)
-            gender = st.selectbox("Gender", ["Male","Female","Other"])
-            glucose = st.number_input("Glucose", value=0.0, format="%.2f")
-            bp = st.number_input("Blood Pressure", value=0.0, format="%.2f")
-            insulin = st.number_input("Insulin", value=0.0, format="%.2f")
-            bmi = st.number_input("BMI", value=0.0, format="%.2f")
-            dpf = st.number_input("Diabetes Pedigree Function", value=0.0, format="%.3f")
-            history = st.text_area("Medical History", help="Enter previous medical history")
-            submitted = st.form_submit_button("Predict & Save")
-            
-            if submitted:
-                if not name or not history:
-                    st.warning("Please fill all required fields including medical history.")
-                else:
-                    patient_data = [glucose, bp, insulin, bmi, dpf, age]
-                    prediction = predict_diabetes(patient_data)
-                    tips = health_tips(prediction)
-                    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    c.execute("""INSERT INTO patients (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date)
-                                 VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                              (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date))
-                    conn.commit()
-                    patient_id = c.lastrowid
-                    
-                    patient_dict = {"id": patient_id, "name": name, "age": age, "gender": gender,
-                                    "glucose": glucose, "bp": bp, "insulin": insulin, "bmi": bmi, "dpf": dpf,
-                                    "history": history, "prediction": prediction, "tips": tips}
-                    pdf_file = generate_pdf(patient_dict)
-                    st.success(f"Patient saved. Prediction: {prediction}")
-                    with open(pdf_file, "rb") as file:
-                        st.download_button("Download PDF Report", file.read(), file_name=f"{name}_{patient_id}.pdf", mime="application/pdf")
+with st.form("patient_form"):
+    name = st.text_input("Name")
+    age = st.number_input("Age", min_value=0, max_value=120)
+    # ... other inputs ...
+    submitted = st.form_submit_button("Predict & Save")
+
+if submitted:
+    # Process prediction
+    patient_data = [glucose, bp, insulin, bmi, dpf, age]
+    prediction = predict_diabetes(patient_data)
+    tips = health_tips(prediction)
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Save to DB
+    c.execute("""INSERT INTO patients 
+                 (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+              (name, age, gender, glucose, bp, insulin, bmi, dpf, history, prediction, date))
+    conn.commit()
+    patient_id = c.lastrowid
+
+    # Generate PDF
+    patient_dict = {"id": patient_id, "name": name, "age": age, "gender": gender,
+                    "glucose": glucose, "bp": bp, "insulin": insulin, "bmi": bmi, "dpf": dpf,
+                    "history": history, "prediction": prediction, "tips": tips}
+    pdf_file = generate_pdf(patient_dict)
+
+    # Show results outside the form
+    st.success(f"Patient saved. Prediction: {prediction}")
+
+    # Download button must be **outside the form**
+    with open(pdf_file, "rb") as file:
+        st.download_button("Download PDF Report", file.read(), file_name=f"{name}_{patient_id}.pdf", mime="application/pdf")
 
     # ---------------- View Patients ----------------
     if menu=="View Patients":
