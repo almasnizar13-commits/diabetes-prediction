@@ -729,7 +729,7 @@ def show_auth():
     <div style='text-align:center; padding:48px 0 24px;'>
         <div style='font-size:56px; margin-bottom:12px;'>🩺</div>
         <div style='font-family:"Playfair Display",serif; font-size:38px; font-weight:800; color:white; margin-bottom:8px;'>
-            DiabetesAI <span style='color:#0fd4c8;'>Pro</span>
+            Diabetes Prediction System <span style='color:#0fd4c8;'>Pro</span>
         </div>
         <p style='color:#5a7a9a; font-size:14px; letter-spacing:2px; text-transform:uppercase;'>
             Smart Diabetes Prediction 
@@ -834,7 +834,7 @@ def show_nav():
         <div style='display:flex; align-items:center; gap:10px;'>
             <span style='font-size:22px;'>🩺</span>
             <div style='font-family:"Playfair Display",serif; font-size:18px; font-weight:800; color:white;'>
-                DiabetesAI <span style='color:#0fd4c8;'>Pro</span>
+                Diabetes Prediction System <span style='color:#0fd4c8;'>Pro</span>
             </div>
         </div>
         <div style='display:flex; align-items:center; gap:8px;'>
