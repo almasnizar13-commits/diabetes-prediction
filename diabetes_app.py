@@ -891,10 +891,10 @@ def page_dashboard():
     user    = st.session_state.user
     records = get_user_records(user["username"])
     total   = len(records)
-    df      = pd.DataFrame(records, columns=RECORD_COLS) if records else pd.DataFrame()
+    df      = pd.DataFrame(records, columns=RECORD_COLS) if records else pd.DataFrame(columns=RECORD_COLS)
 
-    diabetic = len(df[df["Result"]=="Diabetic"])  if not df.empty else 0
-    healthy  = total - diabetic
+    diabetic = len(df[df["Result"]=="Diabetic"])   if not df.empty else 0
+    healthy  = len(df[df["Result"]=="Non-Diabetic"]) if not df.empty else 0
     patients = get_patients(user["username"])
 
     st.markdown(f"""
@@ -907,12 +907,13 @@ def page_dashboard():
     </div>
     """, unsafe_allow_html=True)
 
+    # ── STATS ────────────────────────────────────────
     c1,c2,c3,c4 = st.columns(4)
     for col, num, lbl, col_str in [
-        (c1, total,         "Total Predictions",  "#0fd4c8"),
-        (c2, diabetic,      "Diabetic Cases",      "#ff4560"),
-        (c3, healthy,       "Healthy Cases",       "#00e396"),
-        (c4, len(patients), "Patients Registered", "#f0b429"),
+        (c1, total,           "Total Predictions",   "#0fd4c8"),
+        (c2, diabetic,        "Diabetic Cases",       "#ff4560"),
+        (c3, healthy,         "Healthy Cases",        "#00e396"),
+        (c4, len(patients),   "Patients Registered",  "#f0b429"),
     ]:
         with col:
             st.markdown(f"""
@@ -924,41 +925,124 @@ def page_dashboard():
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
+    if df.empty:
+        st.markdown("""
+        <div style='background:rgba(15,212,200,0.05); border:1px solid rgba(15,212,200,0.1);
+                    border-radius:16px; padding:48px; text-align:center; margin-top:16px;'>
+            <div style='font-size:48px; margin-bottom:16px;'>🔬</div>
+            <div style='font-family:"Playfair Display",serif; font-size:20px; color:white; margin-bottom:8px;'>
+                No Predictions Yet
+            </div>
+            <p style='color:#5a7a9a; font-size:14px;'>
+                Register a patient and run a prediction to see your dashboard data
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # ── CHARTS ROW 1 ─────────────────────────────────
     col1, col2 = st.columns([2,1])
 
     with col1:
         st.markdown("<div class='glass-card'><h4>📈 Recent Predictions</h4>", unsafe_allow_html=True)
-        if not df.empty:
-            recent = df.head(5)[["Name","Age","Glucose","BMI","Result","Probability","Date"]]
-            st.dataframe(recent, use_container_width=True, hide_index=True)
-        else:
-            st.markdown("<p style='color:#5a7a9a; text-align:center; padding:20px;'>No predictions yet</p>", unsafe_allow_html=True)
+        recent = df.head(8)[["Name","Age","Sex","Glucose","BMI","Result","Probability","Date"]]
+        st.dataframe(recent, use_container_width=True, hide_index=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("<div class='glass-card'><h4>📊 Case Distribution</h4>", unsafe_allow_html=True)
-        if total > 0:
-            fig = go.Figure(go.Pie(
-                labels=["Diabetic","Healthy"],
-                values=[diabetic, healthy],
-                hole=0.6,
-                marker=dict(colors=["#ff4560","#00e396"]),
-                textinfo="percent",
-                textfont=dict(family="Outfit", size=12, color="white"),
-            ))
-            fig.update_layout(
+        fig = go.Figure(go.Pie(
+            labels=["Diabetic","Healthy"],
+            values=[diabetic, healthy],
+            hole=0.6,
+            marker=dict(colors=["#ff4560","#00e396"]),
+            textinfo="percent+label",
+            textfont=dict(family="Outfit", size=12, color="white"),
+        ))
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False,
+            margin=dict(t=10,b=10,l=10,r=10),
+            height=220,
+            annotations=[dict(text=str(total), x=0.5, y=0.5,
+                              font_size=22, font_color="white", showarrow=False)]
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar":False})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── CHARTS ROW 2 ─────────────────────────────────
+    col3, col4 = st.columns(2)
+
+    with col3:
+        st.markdown("<div class='glass-card'><h4>🩸 Glucose Levels by Patient</h4>", unsafe_allow_html=True)
+        fig2 = px.bar(df, x="Name", y="Glucose",
+                      color="Result",
+                      color_discrete_map={"Diabetic":"#ff4560","Non-Diabetic":"#00e396"},
+                      text="Glucose")
+        fig2.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Outfit", color="#e8f0f8"),
+            margin=dict(t=10,b=10,l=10,r=10), height=260,
+            xaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            yaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            legend=dict(font=dict(color="white", family="Outfit"))
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar":False})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col4:
+        st.markdown("<div class='glass-card'><h4>📈 Probability Score per Patient</h4>", unsafe_allow_html=True)
+        fig3 = px.bar(df, x="Name", y="Probability",
+                      color="Probability",
+                      color_continuous_scale=["#00e396","#f0b429","#ff4560"],
+                      range_color=[0,100], text="Probability")
+        fig3.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Outfit", color="#e8f0f8"),
+            margin=dict(t=10,b=10,l=10,r=10), height=260,
+            xaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            yaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            coloraxis_showscale=False
+        )
+        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar":False})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── CHARTS ROW 3 ─────────────────────────────────
+    col5, col6 = st.columns(2)
+
+    with col5:
+        st.markdown("<div class='glass-card'><h4>⚖️ BMI Distribution</h4>", unsafe_allow_html=True)
+        fig4 = px.bar(df, x="Name", y="BMI",
+                      color="Result",
+                      color_discrete_map={"Diabetic":"#ff4560","Non-Diabetic":"#00e396"})
+        fig4.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="Outfit", color="#e8f0f8"),
+            margin=dict(t=10,b=10,l=10,r=10), height=260,
+            xaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            yaxis=dict(gridcolor="rgba(15,212,200,0.08)"),
+            legend=dict(font=dict(color="white", family="Outfit"))
+        )
+        st.plotly_chart(fig4, use_container_width=True, config={"displayModeBar":False})
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col6:
+        st.markdown("<div class='glass-card'><h4>🎯 Risk Level Distribution</h4>", unsafe_allow_html=True)
+        if "RiskLevel" in df.columns:
+            risk_counts = df["RiskLevel"].value_counts().reset_index()
+            risk_counts.columns = ["Risk","Count"]
+            fig5 = px.pie(risk_counts, names="Risk", values="Count",
+                          color="Risk",
+                          color_discrete_map={"HIGH":"#ff4560","MODERATE":"#f0b429","LOW":"#00e396"},
+                          hole=0.5)
+            fig5.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                showlegend=True,
-                legend=dict(font=dict(color="white", family="Outfit", size=11)),
-                margin=dict(t=10,b=10,l=10,r=10),
-                height=220,
-                annotations=[dict(text=str(total), x=0.5, y=0.5, font_size=22,
-                                  font_color="white", showarrow=False)]
+                font=dict(family="Outfit", color="#e8f0f8"),
+                margin=dict(t=10,b=10,l=10,r=10), height=260,
+                legend=dict(font=dict(color="white", family="Outfit"))
             )
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar":False})
-        else:
-            st.markdown("<p style='color:#5a7a9a; text-align:center; padding:20px;'>No data yet</p>", unsafe_allow_html=True)
+            st.plotly_chart(fig5, use_container_width=True, config={"displayModeBar":False})
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════
@@ -1150,58 +1234,147 @@ def page_prediction():
 def page_records():
     user    = st.session_state.user
     records = get_user_records(user["username"])
-    st.markdown("<div class='hero-header'><div class='hero-title'>📋 Saved Records</div><p class='hero-sub'>All patient records stored in database</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero-header'><div class='hero-title'>📋 Saved Records</div><p class='hero-sub'>All patient prediction records stored in database</p></div>", unsafe_allow_html=True)
 
     if not records:
-        st.info("No records yet. Run a prediction to save records!"); return
+        st.markdown("""
+        <div style='background:rgba(15,212,200,0.05); border:1px solid rgba(15,212,200,0.1);
+                    border-radius:16px; padding:48px; text-align:center;'>
+            <div style='font-size:48px; margin-bottom:16px;'>📋</div>
+            <div style='font-family:"Playfair Display",serif; font-size:20px; color:white; margin-bottom:8px;'>
+                No Records Yet
+            </div>
+            <p style='color:#5a7a9a; font-size:14px;'>Run a prediction to save patient records</p>
+        </div>
+        """, unsafe_allow_html=True)
+        return
 
     df       = pd.DataFrame(records, columns=RECORD_COLS)
     total    = len(df)
     diabetic = len(df[df["Result"]=="Diabetic"])
     healthy  = total - diabetic
 
+    # ── STATS ────────────────────────────────────────
     c1,c2,c3 = st.columns(3)
-    with c1: st.markdown(f"<div class='stat-card'><div class='stat-num'>{total}</div><div class='stat-lbl'>Total Records</div></div>", unsafe_allow_html=True)
-    with c2: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#ff4560;'>{diabetic}</div><div class='stat-lbl'>Diabetic</div></div>", unsafe_allow_html=True)
-    with c3: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#00e396;'>{healthy}</div><div class='stat-lbl'>Not Diabetic</div></div>", unsafe_allow_html=True)
+    with c1: st.markdown(f"<div class='stat-card'><div class='stat-num'>{total}</div><div class='stat-lbl'>Total Records</div></div>",                                              unsafe_allow_html=True)
+    with c2: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#ff4560;'>{diabetic}</div><div class='stat-lbl'>Diabetic</div></div>",                         unsafe_allow_html=True)
+    with c3: st.markdown(f"<div class='stat-card'><div class='stat-num' style='color:#00e396;'>{healthy}</div><div class='stat-lbl'>Not Diabetic</div></div>",                      unsafe_allow_html=True)
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Filter
-    st.markdown("<div class='glass-card'><h4>🔍 Filter & Search</h4>", unsafe_allow_html=True)
-    fc1, fc2 = st.columns(2)
-    with fc1: f_result = st.selectbox("Filter by Result", ["All","Diabetic","Non-Diabetic"])
-    with fc2: f_risk   = st.selectbox("Filter by Risk",   ["All","HIGH","MODERATE","LOW"])
+    # ── SEARCH & FILTER ──────────────────────────────
+    st.markdown("<div class='glass-card'><h4>🔍 Search & Filter</h4>", unsafe_allow_html=True)
+    sc1, sc2, sc3, sc4 = st.columns(4)
+
+    with sc1:
+        search_name = st.text_input("🔎 Search by Name", placeholder="Type patient name...")
+    with sc2:
+        f_result = st.selectbox("Filter by Result",   ["All","Diabetic","Non-Diabetic"])
+    with sc3:
+        f_risk   = st.selectbox("Filter by Risk Level",["All","HIGH","MODERATE","LOW"])
+    with sc4:
+        f_sex    = st.selectbox("Filter by Sex",       ["All","Male","Female","Other"])
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # Apply filters
     fdf = df.copy()
-    if f_result != "All": fdf = fdf[fdf["Result"] == f_result]
-    if f_risk   != "All": fdf = fdf[fdf["RiskLevel"] == f_risk]
 
-    # Show records
+    if search_name:
+        fdf = fdf[fdf["Name"].str.contains(search_name, case=False, na=False)]
+    if f_result != "All":
+        fdf = fdf[fdf["Result"] == f_result]
+    if f_risk != "All" and "RiskLevel" in fdf.columns:
+        fdf = fdf[fdf["RiskLevel"] == f_risk]
+    if f_sex != "All":
+        fdf = fdf[fdf["Sex"] == f_sex]
+
+    # ── SHOW FILTERED COUNT ──────────────────────────
+    st.markdown(f"""
+    <div style='background:rgba(15,212,200,0.05); border:1px solid rgba(15,212,200,0.1);
+                border-radius:10px; padding:10px 16px; margin-bottom:16px;'>
+        <p style='margin:0; font-size:13px; color:#5a7a9a;'>
+        Showing <b style='color:#0fd4c8;'>{len(fdf)}</b> of
+        <b style='color:#0fd4c8;'>{total}</b> records
+        {f"matching <b style='color:white;'>'{search_name}'</b>" if search_name else ""}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── RECORDS TABLE ────────────────────────────────
     st.markdown("<div class='glass-card'><h4>📋 Patient Records</h4>", unsafe_allow_html=True)
-    show_cols = ["PatientID","Name","Age","Sex","Glucose","BMI","BP","Result","Probability","RiskLevel","Date"]
-    show_df   = fdf[show_cols] if all(c in fdf.columns for c in show_cols) else fdf
-    st.dataframe(show_df, use_container_width=True, hide_index=True)
+
+    if fdf.empty:
+        st.markdown("<p style='color:#5a7a9a; text-align:center; padding:20px;'>No records match your filter</p>", unsafe_allow_html=True)
+    else:
+        show_cols = ["PatientID","Name","Age","Sex","Glucose","BMI","BP",
+                     "Result","Probability","RiskLevel","Date"]
+        avail = [c for c in show_cols if c in fdf.columns]
+        show_df = fdf[avail]
+
+        # Color code rows
+        def color_result(val):
+            if val == "Diabetic":
+                return "color: #ff4560; font-weight:600;"
+            return "color: #00e396; font-weight:600;"
+
+        st.dataframe(show_df, use_container_width=True, hide_index=True)
+
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Download all PDF
-    all_pdf = generate_pdf("All Patients", "ALL", fdf)
-    st.download_button(
-        "📄 Download All Records (PDF)",
-        data=all_pdf,
-        file_name=f"all_records_{datetime.now().strftime('%d%m%Y')}.pdf",
-        mime="application/pdf",
-        use_container_width=True
-    )
+    # ── RECORD CARDS ─────────────────────────────────
+    if not fdf.empty:
+        st.markdown("<div class='glass-card'><h4>🃏 Record Cards</h4>", unsafe_allow_html=True)
+        for _, row in fdf.head(10).iterrows():
+            is_d  = row.get("Result","") == "Diabetic"
+            color = "#ff4560" if is_d else "#00e396"
+            icon  = "⚠️" if is_d else "✅"
+            risk  = row.get("RiskLevel","—")
+            prob  = row.get("Probability", 0)
+
+            st.markdown(f"""
+            <div style='background:var(--card2); border:1px solid {"rgba(255,69,96,0.2)" if is_d else "rgba(0,227,150,0.15)"};
+                        border-radius:12px; padding:16px 20px; margin-bottom:10px;'>
+                <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;'>
+                    <div>
+                        <span style='color:white; font-size:15px; font-weight:700;'>{icon} {row.get("Name","—")}</span>
+                        <span style='color:#5a7a9a; font-size:11px; margin-left:12px;'>ID: {row.get("PatientID","—")}</span>
+                        <span style='color:#5a7a9a; font-size:11px; margin-left:8px;'>📅 {row.get("Date","—")}</span>
+                    </div>
+                    <span style='color:{color}; font-weight:700; font-size:12px;
+                                 background:{"rgba(255,69,96,0.1)" if is_d else "rgba(0,227,150,0.08)"};
+                                 padding:4px 14px; border-radius:100px;
+                                 border:1px solid {color}40;'>
+                        {row.get("Result","—")} — {prob}% — {risk}
+                    </span>
+                </div>
+                <div style='display:grid; grid-template-columns:repeat(6,1fr); gap:8px;'>
+                    {"".join([f"<div style='background:rgba(255,255,255,0.03); border-radius:8px; padding:8px; text-align:center;'><div style='font-size:10px; color:#5a7a9a;'>{lbl}</div><div style='font-size:13px; color:white; font-weight:600;'>{row.get(key,'—')}</div></div>" for lbl,key in [("Age","Age"),("Sex","Sex"),("Glucose","Glucose"),("BMI","BMI"),("BP","BP"),("Insulin","Insulin")]])}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
-    # Specific patient
+    # ── DOWNLOAD ALL PDF ─────────────────────────────
+    if not fdf.empty:
+        all_pdf = generate_pdf("Filtered Records", "FILTERED", fdf)
+        st.download_button(
+            "📄 Download Filtered Records (PDF)",
+            data=all_pdf,
+            file_name=f"records_{datetime.now().strftime('%d%m%Y_%H%M')}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+
+    # ── SPECIFIC PATIENT DOWNLOAD ─────────────────────
     st.markdown("<div class='glass-card'><h4>👤 Download Specific Patient Report</h4>", unsafe_allow_html=True)
     patients = get_patients(user["username"])
+
     if patients:
-        p_opts = {f"{p[3]} ({p[1]})": p for p in patients}
+        p_opts    = {f"{p[3]} ({p[1]})": p for p in patients}
         sel_label = st.selectbox("Select Patient", list(p_opts.keys()))
         sel_p     = p_opts[sel_label]
 
@@ -1209,7 +1382,23 @@ def page_records():
         if p_records:
             p_df   = pd.DataFrame(p_records, columns=RECORD_COLS)
             p_show = p_df.drop(columns=["ID","Username"], errors="ignore")
-            st.markdown(f"<p style='color:#5a7a9a; font-size:13px;'>{len(p_df)} records found for <b style='color:#0fd4c8;'>{sel_p[3]}</b></p>", unsafe_allow_html=True)
+
+            latest = p_df.iloc[0]
+            is_d   = latest.get("Result","") == "Diabetic"
+            color  = "#ff4560" if is_d else "#00e396"
+
+            st.markdown(f"""
+            <div style='background:rgba(15,212,200,0.05); border:1px solid rgba(15,212,200,0.15);
+                        border-radius:12px; padding:14px 18px; margin-bottom:14px;'>
+                <p style='margin:0; font-size:13px;'>
+                    Patient: <b style='color:white;'>{sel_p[3]}</b> &nbsp;|&nbsp;
+                    ID: <b style='color:#0fd4c8;'>{sel_p[1]}</b> &nbsp;|&nbsp;
+                    Records: <b style='color:#0fd4c8;'>{len(p_df)}</b> &nbsp;|&nbsp;
+                    Latest: <b style='color:{color};'>{latest.get("Result","—")}</b>
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
             st.dataframe(p_show, use_container_width=True, hide_index=True)
 
             p_pdf = generate_pdf(sel_p[3], sel_p[1], p_show)
@@ -1222,8 +1411,10 @@ def page_records():
             )
         else:
             st.markdown("<p style='color:#5a7a9a;'>No records for this patient yet</p>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<p style='color:#5a7a9a;'>No patients registered yet</p>", unsafe_allow_html=True)
 
+    st.markdown("</div>", unsafe_allow_html=True)
 # ══════════════════════════════════════════════════════════
 # VISUALIZATION
 # ══════════════════════════════════════════════════════════
