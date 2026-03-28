@@ -439,10 +439,16 @@ h1,h2,h3,h4,h5,h6 { color: var(--text) !important; }
 # ══════════════════════════════════════════════════════════
 # DATABASE
 # ══════════════════════════════════════════════════════════
-conn = sqlite3.connect("diabetes.db", check_same_thread=False)
-c = conn.cursor()
 
+import os
+
+# ✅ Use /tmp for Streamlit Cloud persistence within session
+DB_PATH = os.path.join("/tmp", "diabetespro.db")
+
+conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+c    = conn.cursor()
 def create_tables():
+    # Users
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -451,59 +457,69 @@ def create_tables():
             fullname  TEXT DEFAULT '',
             email     TEXT DEFAULT '',
             role      TEXT DEFAULT 'user',
-            joined    TEXT
+            joined    TEXT DEFAULT ''
         )
     """)
-    for col in ["fullname TEXT DEFAULT ''", "email TEXT DEFAULT ''",
-                "role TEXT DEFAULT 'user'", "joined TEXT DEFAULT ''"]:
+    for col in ["fullname TEXT DEFAULT ''","email TEXT DEFAULT ''",
+                "role TEXT DEFAULT 'user'","joined TEXT DEFAULT ''"]:
         try: c.execute(f"ALTER TABLE users ADD COLUMN {col}"); conn.commit()
         except: pass
 
+    # Patients
     c.execute("""
         CREATE TABLE IF NOT EXISTS patients (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id TEXT UNIQUE,
-            username   TEXT,
-            name       TEXT,
-            age        INTEGER,
-            sex        TEXT,
+            username   TEXT DEFAULT '',
+            name       TEXT DEFAULT '',
+            age        INTEGER DEFAULT 0,
+            sex        TEXT DEFAULT '',
             phone      TEXT DEFAULT '',
             blood_grp  TEXT DEFAULT '',
-            created    TEXT
+            created    TEXT DEFAULT ''
         )
     """)
+    for col in ["username TEXT DEFAULT ''","phone TEXT DEFAULT ''",
+                "blood_grp TEXT DEFAULT ''","created TEXT DEFAULT ''"]:
+        try: c.execute(f"ALTER TABLE patients ADD COLUMN {col}"); conn.commit()
+        except: pass
 
+    # Records
     c.execute("""
         CREATE TABLE IF NOT EXISTS records (
             id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            username       TEXT,
-            patient_id     TEXT,
-            patient_name   TEXT,
-            age            INTEGER,
-            sex            TEXT,
-            glucose        REAL,
-            bp             REAL,
-            insulin        REAL,
-            bmi            REAL,
-            dpf            REAL,
-            result         TEXT,
-            probability    REAL,
-            risk_level     TEXT,
-            recommendation TEXT,
-            date           TEXT
+            username       TEXT DEFAULT '',
+            patient_id     TEXT DEFAULT '',
+            patient_name   TEXT DEFAULT '',
+            age            INTEGER DEFAULT 0,
+            sex            TEXT DEFAULT '',
+            glucose        REAL DEFAULT 0,
+            bp             REAL DEFAULT 0,
+            insulin        REAL DEFAULT 0,
+            bmi            REAL DEFAULT 0,
+            dpf            REAL DEFAULT 0,
+            result         TEXT DEFAULT '',
+            probability    REAL DEFAULT 0,
+            risk_level     TEXT DEFAULT '',
+            recommendation TEXT DEFAULT '',
+            date           TEXT DEFAULT ''
         )
     """)
-    for col in ["patient_id TEXT DEFAULT ''", "risk_level TEXT DEFAULT ''",
-                "dpf REAL DEFAULT 0"]:
+    for col in ["username TEXT DEFAULT ''","patient_id TEXT DEFAULT ''",
+                "patient_name TEXT DEFAULT ''","sex TEXT DEFAULT ''",
+                "dpf REAL DEFAULT 0","risk_level TEXT DEFAULT ''",
+                "recommendation TEXT DEFAULT ''"]:
         try: c.execute(f"ALTER TABLE records ADD COLUMN {col}"); conn.commit()
         except: pass
 
-    # Admin user
+    # Admin
     try:
         pw = hashlib.sha256("admin123".encode()).hexdigest()
-        c.execute("INSERT OR IGNORE INTO users (username,password,fullname,email,role,joined) VALUES (?,?,?,?,?,?)",
-                  ("admin", pw, "Administrator", "admin@diabetes.com", "admin",
-                   datetime.now().strftime("%d/%m/%Y")))
+        c.execute("""INSERT OR IGNORE INTO users
+                     (username,password,fullname,email,role,joined)
+                     VALUES (?,?,?,?,?,?)""",
+                  ("admin",pw,"Administrator","admin@diabetespro.com",
+                   "admin",datetime.now().strftime("%d/%m/%Y")))
         conn.commit()
     except: pass
 
@@ -513,60 +529,108 @@ def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
 
 def add_user(username, password, fullname, email):
     try:
-        c.execute("INSERT INTO users (username,password,fullname,email,role,joined) VALUES (?,?,?,?,?,?)",
-                  (username, hash_pw(password), fullname, email, "user",
+        c.execute("""INSERT INTO users
+                     (username,password,fullname,email,role,joined)
+                     VALUES (?,?,?,?,?,?)""",
+                  (username, hashlib.sha256(password.encode()).hexdigest(),
+                   fullname, email, "user",
                    datetime.now().strftime("%d/%m/%Y")))
-        conn.commit(); return True
+        conn.commit()
+        return True
     except: return False
 
 def login_user(username, password):
-    c.execute("SELECT * FROM users WHERE username=? AND password=?",
-              (username, hash_pw(password)))
-    row = c.fetchone()
-    if row: return {"id":row[0],"username":row[1],"fullname":row[3],"email":row[4],"role":row[5]}
-    return None
+    try:
+        pw = hashlib.sha256(password.encode()).hexdigest()
+        c.execute("SELECT * FROM users WHERE username=? AND password=?",
+                  (username, pw))
+        row = c.fetchone()
+        if row:
+            return {
+                "id":       row[0],
+                "username": row[1],
+                "fullname": row[3] if len(row) > 3 and row[3] else row[1],
+                "email":    row[4] if len(row) > 4 else "",
+                "role":     row[5] if len(row) > 5 else "user"
+            }
+        return None
+    except: return None
 
 def generate_patient_id():
-    c.execute("SELECT COUNT(*) FROM patients")
-    n = c.fetchone()[0]
-    return f"PT{str(n+1).zfill(4)}"
+    try:
+        c.execute("SELECT COUNT(*) FROM patients")
+        n = c.fetchone()[0]
+        return f"PT{str(n+1).zfill(4)}"
+    except: return f"PT0001"
 
 def save_patient(username, name, age, sex, phone, blood_grp):
     pid = generate_patient_id()
     try:
-        c.execute("INSERT INTO patients (patient_id,username,name,age,sex,phone,blood_grp,created) VALUES (?,?,?,?,?,?,?,?)",
+        c.execute("""INSERT INTO patients
+                     (patient_id,username,name,age,sex,phone,blood_grp,created)
+                     VALUES (?,?,?,?,?,?,?,?)""",
                   (pid, username, name, age, sex, phone, blood_grp,
                    datetime.now().strftime("%d/%m/%Y %H:%M")))
-        conn.commit(); return pid
-    except: return None
+        conn.commit()
+        return pid
+    except Exception as e:
+        return None
 
 def get_patients(username):
-    c.execute("SELECT * FROM patients WHERE username=? ORDER BY id DESC", (username,))
-    return c.fetchall()
+    try:
+        c.execute("""SELECT * FROM patients
+                     WHERE username=? ORDER BY id DESC""", (username,))
+        return c.fetchall()
+    except: return []
 
 def add_record(data):
-    c.execute("""INSERT INTO records
-        (username,patient_id,patient_name,age,sex,glucose,bp,insulin,bmi,dpf,
-         result,probability,risk_level,recommendation,date)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", data)
-    conn.commit()
+    try:
+        c.execute("""INSERT INTO records
+            (username,patient_id,patient_name,age,sex,
+             glucose,bp,insulin,bmi,dpf,
+             result,probability,risk_level,recommendation,date)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", data)
+        conn.commit()
+        return True
+    except Exception as e:
+        return False
 
 def get_user_records(username):
-    c.execute("SELECT * FROM records WHERE username=? ORDER BY id DESC", (username,))
-    return c.fetchall()
+    try:
+        c.execute("""SELECT * FROM records
+                     WHERE username=? ORDER BY id DESC""", (username,))
+        rows = c.fetchall()
+        return rows if rows else []
+    except: return []
 
 def get_all_records():
-    c.execute("SELECT * FROM records ORDER BY id DESC")
-    return c.fetchall()
+    try:
+        c.execute("SELECT * FROM records ORDER BY id DESC")
+        return c.fetchall()
+    except: return []
 
 def get_patient_records(username, patient_id):
-    c.execute("SELECT * FROM records WHERE username=? AND patient_id=? ORDER BY id DESC",
-              (username, patient_id))
-    return c.fetchall()
+    try:
+        c.execute("""SELECT * FROM records
+                     WHERE username=? AND patient_id=?
+                     ORDER BY id DESC""",
+                  (username, patient_id))
+        return c.fetchall()
+    except: return []
 
 def get_all_users():
-    c.execute("SELECT id,username,fullname,email,role,joined FROM users")
-    return c.fetchall()
+    try:
+        c.execute("""SELECT id,username,fullname,email,role,joined
+                     FROM users""")
+        return c.fetchall()
+    except: return []
+
+def get_patient_names(username):
+    try:
+        c.execute("""SELECT DISTINCT patient_name FROM records
+                     WHERE username=?""", (username,))
+        return [row[0] for row in c.fetchall()]
+    except: return []
 
 # ══════════════════════════════════════════════════════════
 # MODEL
